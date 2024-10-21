@@ -10,7 +10,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+
 import { useAppContext } from "../contexts/AppContext";
 import { BrandOptions } from "../enums/Enums";
 
