@@ -119,7 +119,7 @@ export default function AppointmentTable() {
       }
     };
     fetchData();
-  }, []);
+  }, [appointmentRequest]);
 
 
   const handleApiSearch = async () => {

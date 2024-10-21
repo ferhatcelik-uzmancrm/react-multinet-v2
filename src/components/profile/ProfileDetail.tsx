@@ -83,7 +83,7 @@ const ProfileDetail: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [currentUserId]);
 
   const handleCityChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {

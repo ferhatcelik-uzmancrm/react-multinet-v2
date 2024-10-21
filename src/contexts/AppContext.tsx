@@ -40,15 +40,6 @@ export const AppContextProvider = ({
   useEffect(() => {
     const brand = localStorage.getItem("brand");
     switch (brand) {
-      case "Avis":
-        setSelectedBrand(BrandOptions.Avis);
-        break;
-      case "Filo":
-        setSelectedBrand(BrandOptions.Filo);
-        break;
-      case "Budget":
-        setSelectedBrand(BrandOptions.Budget);
-        break;
       case "Multinet":
         setSelectedBrand(BrandOptions.Multinet);
         break;

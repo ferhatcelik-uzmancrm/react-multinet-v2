@@ -52,12 +52,12 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
     }
   }, 500);
 
-  useEffect(() => {
-    debouncedFetch(inputValue);
-    return () => {
-      debouncedFetch.cancel();
-    };
-  }, [inputValue]);
+useEffect(() => {
+  debouncedFetch(inputValue);
+  return () => {
+    debouncedFetch.cancel();
+  };
+}, [inputValue, debouncedFetch]);
 
   return (
     <Autocomplete
