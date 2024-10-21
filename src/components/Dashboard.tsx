@@ -93,10 +93,10 @@ const Dashboard = () => {
 
   // const [tasks, setTasks] = useState<Task[]>(taskInitData);
 
-  const navigate = useNavigate();
-  const sendTask = () => {
-    navigate("/tasks");
-  };
+  // const navigate = useNavigate();
+  // const sendTask = () => {
+  //   // navigate("/tasks");
+  // };
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -191,7 +191,7 @@ const Dashboard = () => {
                 </Typography>
               </AccordionSummary>
               <CardContent>
-                <AccordionDetails onClick={sendTask}>
+                <AccordionDetails /*onClick={sendTask}*/>
                   <Typography
                     variant="body2"
                     color="text.secondary"

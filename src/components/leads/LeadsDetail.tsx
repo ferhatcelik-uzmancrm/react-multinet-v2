@@ -137,66 +137,66 @@ const LeadsDetail: React.FC = () => {
   };
   const handleCountryChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
-        setLead(prevLead => ({
-            ...prevLead,
-            CountryId: selectedOption.Id,
-            CountryName: selectedOption.Name
-        }));
-        // setCityApiEndpoint(`api/search-city-by-name?countryId=${selectedOption.Id}`);
+      setLead(prevLead => ({
+        ...prevLead,
+        CountryId: selectedOption.Id,
+        CountryName: selectedOption.Name
+      }));
+      // setCityApiEndpoint(`api/search-city-by-name?countryId=${selectedOption.Id}`);
     } else {
-        setLead(prevLead => ({
-            ...prevLead,
-            CountryId: "",
-            CountryName: "",
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        CountryId: "",
+        CountryName: "",
+      }));
     }
-};
+  };
 
-const handleCityChange = (selectedOption: LookupOptionType | null) => {
+  const handleCityChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
-        setLead(prevLead => ({
-            ...prevLead,
-            CityId: selectedOption.Id,
-            CityName: selectedOption.Name
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        CityId: selectedOption.Id,
+        CityName: selectedOption.Name
+      }));
     } else {
-        setLead(prevLead => ({
-            ...prevLead,
-            CityId: "",
-            CityName: "",
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        CityId: "",
+        CityName: "",
+      }));
     }
-};
-const handleJobTitleChange = (selectedOption: LookupOptionType | null) => {
+  };
+  const handleJobTitleChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
-        setLead(prevLead => ({
-            ...prevLead,
-            JobTitleId: selectedOption.Id,
-            JobTitleName: selectedOption.Name
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        JobTitleId: selectedOption.Id,
+        JobTitleName: selectedOption.Name
+      }));
     } else {
-        setLead(prevLead => ({
-            ...prevLead,
-            JobTitleId: "",
-            JobTitleName: "",
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        JobTitleId: "",
+        JobTitleName: "",
+      }));
     }
-};
-const handleTownChange = (selectedOption: LookupOptionType | null) => {
+  };
+  const handleTownChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
-        setLead(prevLead => ({
-            ...prevLead,
-            TownId: selectedOption.Id,
-            TownName: selectedOption.Name
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        TownId: selectedOption.Id,
+        TownName: selectedOption.Name
+      }));
     } else {
-        setLead(prevLead => ({
-            ...prevLead,
-            TownId: "",
-            TownName: "",
-        }));
+      setLead(prevLead => ({
+        ...prevLead,
+        TownId: "",
+        TownName: "",
+      }));
     }
-};
+  };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // alert(JSON.stringify(lead))
@@ -445,7 +445,7 @@ const handleTownChange = (selectedOption: LookupOptionType | null) => {
           <Grid container spacing={2}>
 
             {/* ADRES READONLY */}
-            <Grid item {...gridItemSize}>
+            {/* <Grid item {...gridItemSize}>
               <TextField
                 label="Ülke"
                 fullWidth
@@ -498,6 +498,44 @@ const handleTownChange = (selectedOption: LookupOptionType | null) => {
                 InputProps={{
                   readOnly: true,
                 }}
+              />
+            </Grid> */}
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+
+                apiEndpoint="api/search-country-by-name"
+                label="Ülke"
+                getCRMData={getCRMData}
+                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName } : null}
+                onValueChange={handleCountryChange}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-city-by-name"
+                label="İl"
+                getCRMData={getCRMData}
+                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName } : null}
+                onValueChange={handleCityChange}
+              />
+            </Grid>
+
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-town-by-name"
+                label="İlçe"
+                getCRMData={getCRMData}
+                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName } : null}
+                onValueChange={handleTownChange}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-neighbourhood-by-name"
+                label="Mahalle"
+                getCRMData={getCRMData}
+                selectedValue={lead.Neighbourhood ? { Id: lead.Neighbourhood, Name: lead.TownName } : null}
+                onValueChange={handleTownChange}
               />
             </Grid>
             <Grid item {...gridItemSize}>

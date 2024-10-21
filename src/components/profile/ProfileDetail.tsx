@@ -1,8 +1,6 @@
 import { ThemeProvider } from "@emotion/react";
-import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography, useMediaQuery, useTheme, InputAdornment, Badge } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, Stepper, TextField, InputAdornment } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Profile } from "../../models/Profile";
@@ -26,10 +24,7 @@ const gridItemSize = {
 
 const ProfileDetail: React.FC = () => {
   const { selectedBrand } = useAppContext();
-  const location = useLocation();
-  const stateData = location.state?.data || [];
 
-  const steps = ['',];
   const [alertState, setAlertState] = useState({
     message: '',
     type: 'success' as 'success' | 'danger',
@@ -45,6 +40,7 @@ const ProfileDetail: React.FC = () => {
   const [loading, setLoading] = useState(Boolean);
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
+  console.log(setActiveStep);
   const currentUserId = localStorage.getItem("portaluserid");
   const getByBrand = () => {
     switch (selectedBrand) {
@@ -119,7 +115,6 @@ const ProfileDetail: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const requiredFields = [''];
 
     const newErrors: { [key: string]: boolean } = {};
 
@@ -149,7 +144,7 @@ const ProfileDetail: React.FC = () => {
 
     try {
       await sendRequest("api/update-user", profile)
-        .then(response => {
+        .then(() => {
           setAlertState({
             message: "Profile update successfully!",
             type: 'success',
@@ -158,7 +153,7 @@ const ProfileDetail: React.FC = () => {
             isOpen: true,
           });
         })
-        .catch(error => {
+        .catch(() => {
           setAlertState({
             message: "Error creating profile. Please try again.",
             type: 'danger',
