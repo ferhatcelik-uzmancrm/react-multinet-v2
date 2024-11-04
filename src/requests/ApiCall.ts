@@ -6,8 +6,8 @@ import { ForgotPasswordRequestModel, LoginRequestModel } from "../models/Login";
 // const NET_URL = process.env.REACT_APP_NET_URL || "http://193.243.195.51:9090";
 // const NET_URL = "https://localhost:44366/api";
 const FASTAPI_URL = "https://oto_service-1-q9834787.deta.app";
-// const CRM_API_URL = "https://localhost:44366";
-const CRM_API_URL = "https://uzmandemo.com:1228/MultinetApi";
+const CRM_API_URL = "https://localhost:44366";
+// const CRM_API_URL = "https://uzmandemo.com:1228/MultinetApi";
 
 const apiService = axios.create({
   timeout: 100000,
@@ -20,7 +20,7 @@ const apiService = axios.create({
 apiService.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    console.log("Token: ", token);
+    // console.log("Token: ", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

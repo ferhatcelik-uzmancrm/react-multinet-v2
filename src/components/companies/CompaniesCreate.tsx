@@ -95,7 +95,7 @@ const CompaniesCreate: React.FC = () => {
         CardType: "",
         CustomerSector: "",
         InvoiceName: "",
-        IsBranch: "",
+        IsBranch: false,
         Description: "",
 
         OwnerId: crmOwner || "",

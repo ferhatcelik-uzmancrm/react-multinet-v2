@@ -10,6 +10,9 @@ interface GenericAutocompleteProps {
   getCRMData: (url: string, params: any) => Promise<AxiosResponse>;
   selectedValue?: LookupOptionType | null; // Optional prop for selected value
   onValueChange?: (value: LookupOptionType | null) => void; // Optional prop for handling value changes
+  required?: boolean; // Zorunluluk kontrolü
+  error?: boolean; // Hata durumu
+  helperText?: string; // Yardımcı metin (örneğin, hata mesajı)
 }
 
 const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
@@ -18,11 +21,22 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   getCRMData,
   selectedValue,
   onValueChange,
+  required = false,
+  error = false, // Varsayılan olarak hata yok
+  helperText = '', // Varsayılan olarak hata mesajı yok
 }) => {
   const [options, setOptions] = useState<LookupOptionType[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null); // Hata için local state
 
+  const handleBlur = () => {
+    if (required && !selectedValue) {
+      setLocalError(`${label} alanı zorunludur.`); // Zorunlu ve boşsa hata mesajı
+    } else {
+      setLocalError(null); // Alan doluysa hatayı sıfırla
+    }
+  };
   // useMemo to define requestParams with static fields and dynamic 'Name'
   const requestParams = useMemo(() => ({
     UserId: localStorage.getItem("userid")?.toString() || "",
@@ -49,6 +63,7 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
       fetchData(value);
     } else {
       setOptions([]); // Clear options if input is less than 3 characters
+      setLoading(false);
     }
   }, 500);
 
@@ -61,34 +76,38 @@ useEffect(() => {
 
   return (
     <Autocomplete
-      options={options}
-      getOptionLabel={(option) => option.Name} // Display the name of the company
-      onInputChange={(event, newInputValue) => setInputValue(newInputValue)} // Track input value changes
-      isOptionEqualToValue={(option, value) => option.Id === value.Id} // Compare by CompanyId
-      value={selectedValue} // Controlled value for the selected option
-      onChange={(event, value) => {
-        if (onValueChange) {
-          onValueChange(value); // Update the selected value in the parent component
-        }
-      }}
-      loading={loading}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          variant="outlined"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
-    />
+        options={options}
+        getOptionLabel={(option) => option.Name} // Şirket adını göster
+        onInputChange={(event, newInputValue) => setInputValue(newInputValue)} // Input değişikliklerini takip et
+        isOptionEqualToValue={(option, value) => option.Id === value.Id} // Seçili değer ile karşılaştır
+        value={selectedValue} // Seçili değeri kontrol et
+        onBlur={handleBlur} // Boş bırakıldığında kontrol et
+        onChange={(event, value) => {
+          if (onValueChange) {
+            onValueChange(value); // Seçim değişikliğini güncelle
+            setLocalError(null); // Seçim yapıldığında hatayı sıfırla
+          }
+        }}
+        loading={loading}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            variant="outlined"
+            error={Boolean(error || localError)} // Hata varsa kırmızı çerçeve
+            helperText={localError || helperText} // Hata mesajını göster
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+      />
   );
 };
 

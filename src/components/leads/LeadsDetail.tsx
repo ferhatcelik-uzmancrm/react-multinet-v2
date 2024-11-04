@@ -135,6 +135,7 @@ const LeadsDetail: React.FC = () => {
       [name]: value,
     }));
   };
+  
   const handleCountryChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
       setLead(prevLead => ({
@@ -151,7 +152,6 @@ const LeadsDetail: React.FC = () => {
       }));
     }
   };
-
   const handleCityChange = (selectedOption: LookupOptionType | null) => {
     if (selectedOption) {
       setLead(prevLead => ({
@@ -197,6 +197,22 @@ const LeadsDetail: React.FC = () => {
       }));
     }
   };
+  const handleSelectFieldChange = (fieldId: keyof typeof lead, fieldName: keyof typeof lead) =>
+    (selectedOption: LookupOptionType | null) => {
+      if (selectedOption) {
+        setLead(prevLead => ({
+          ...prevLead,
+          [fieldId]: selectedOption.Id,
+          [fieldName]: selectedOption.Name
+        }));
+      } else {
+        setLead(prevLead => ({
+          ...prevLead,
+          [fieldId]: "",
+          [fieldName]: "",
+        }));
+      }
+    };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // alert(JSON.stringify(lead))
@@ -327,14 +343,12 @@ const LeadsDetail: React.FC = () => {
             </Grid>
 
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/get-source"
                 label="Müşteri Aday Kaynağı"
-                fullWidth
-                variant="outlined"
-                id="LeadSource"
-                name="LeadSource"
-                value={lead.LeadSource}
-                onChange={handleInputChange}
+                getCRMData={getCRMData}
+                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource } : null}
+                onValueChange={handleSelectFieldChange('LeadSourceCode', 'LeadSource')}
               />
             </Grid>
 
@@ -368,28 +382,13 @@ const LeadsDetail: React.FC = () => {
                 }}
               />
             </Grid>
-
-            {/* <Grid item {...gridItemSize}>
-              <TextField
-                label="Yetkili Unvanı"
-                fullWidth
-                variant="outlined"
-                id="JobTitleId"
-                name="JobTitleName"
-                value={lead.JobTitleName}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid> */}
             <Grid item {...gridItemSize}>
               <GenericAutocomplete
                 apiEndpoint="api/search-contacttitle-by-name"
                 label="Yetkili Unvanı"
                 getCRMData={getCRMData}
                 selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName } : null}
-                onValueChange={handleJobTitleChange}
+                onValueChange={handleSelectFieldChange('JobTitleId', 'JobTitleName')}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -502,12 +501,11 @@ const LeadsDetail: React.FC = () => {
             </Grid> */}
             <Grid item {...gridItemSize}>
               <GenericAutocomplete
-
                 apiEndpoint="api/search-country-by-name"
                 label="Ülke"
                 getCRMData={getCRMData}
                 selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName } : null}
-                onValueChange={handleCountryChange}
+                onValueChange={handleSelectFieldChange('CountryId', 'CountryName')}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -516,7 +514,7 @@ const LeadsDetail: React.FC = () => {
                 label="İl"
                 getCRMData={getCRMData}
                 selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName } : null}
-                onValueChange={handleCityChange}
+                onValueChange={handleSelectFieldChange('CityId', 'CityName')}
               />
             </Grid>
 
@@ -526,7 +524,7 @@ const LeadsDetail: React.FC = () => {
                 label="İlçe"
                 getCRMData={getCRMData}
                 selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName } : null}
-                onValueChange={handleTownChange}
+                onValueChange={handleSelectFieldChange('TownId', 'TownName')}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -534,8 +532,8 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-neighbourhood-by-name"
                 label="Mahalle"
                 getCRMData={getCRMData}
-                selectedValue={lead.Neighbourhood ? { Id: lead.Neighbourhood, Name: lead.TownName } : null}
-                onValueChange={handleTownChange}
+                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood } : null}
+                onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
               />
             </Grid>
             <Grid item {...gridItemSize}>

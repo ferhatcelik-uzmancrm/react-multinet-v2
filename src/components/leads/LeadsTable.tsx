@@ -8,6 +8,7 @@ import Chip from "@mui/joy/Chip";
 import Divider from "@mui/joy/Divider";
 import FormControl from "@mui/joy/FormControl";
 import IconButton, { iconButtonClasses } from "@mui/joy/IconButton";
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Input from "@mui/joy/Input";
 import Link from "@mui/joy/Link";
 import Modal from "@mui/joy/Modal";
@@ -25,6 +26,7 @@ import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { fakeCompanyData } from "../../fake/fakeCompanyData";
 import { handleExport } from "../../helper/Export";
+import DataTable from "../../helper/DataTable";
 import { Lead, LeadRequest } from "../../models/Lead";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
 
@@ -84,6 +86,7 @@ export default function LeadsTable() {
     navigate(`/leads/detail/${companyId}`);
     /*, { state: { data: matchedData } });*/
   };
+
   const createClick = () => {
     navigate(`/leads/create/`);
   };
@@ -161,6 +164,15 @@ export default function LeadsTable() {
       (row.telephone1?.toString().includes(searchQuery)) ||
       row.emailaddress3?.toLowerCase().includes(searchQuery.toLowerCase())
     ) : [];
+
+
+  const columns: GridColDef[] = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'companyname', headerName: 'Marka Adı', width: 130 },
+    { field: 'telephone1', headerName: 'Firma Telefon', width: 130 },
+    { field: 'emailaddress3', headerName: 'Firma E-posta', width: 130 },
+  ];
+
 
   const renderFilters = () => (
     <React.Fragment>
@@ -335,6 +347,7 @@ export default function LeadsTable() {
         </FormControl>
 
       </Box>
+      {/* <DataTable rows={filteredRows} columns={columns} /> */}
       <Sheet
         className="OrderTableContainer"
         variant="outlined"
@@ -348,7 +361,7 @@ export default function LeadsTable() {
             overflowX: isMobile ? "hidden" : "auto",
             overflowY: isMobile ? "hidden" : "auto",
             scrollbarWidth: "thin",
-            border: "1px solid #ddd",
+            border: "1px solid #ddd",
             "&::-webkit-scrollbar": {
               width: "8px",
             },
@@ -409,21 +422,21 @@ export default function LeadsTable() {
                   fontWeight="lg"
                   endDecorator={<i data-feather="arrow-down" />}
                   sx={{
-                    "& svg": {
+                    "& svg": {
                       transition: "0.2s",
                       transform:
                         order === "desc" ? "rotate(0deg)" : "rotate(180deg)",
                     },
                   }}
                 >
-                  Firma Adı
+                  Firma Adı
                 </Link>
               </th>
-              <th style={{ width: 220, padding: 12 }}>Marka Adı</th>
-              {/* <th style={{ width: 120, padding: 12 }}>Vergi No</th> */}
-              <th style={{ width: 120, padding: 12 }}>Firma Telefon</th>
-              <th style={{ width: 120, padding: 12 }}>Firma E-posta</th>
-              <th style={{ width: 120, padding: 12 }}> </th>
+              <th style={{ width: 220, padding: 12 }}>Marka Adı</th>
+              {/* <th style={{ width: 120, padding: 12 }}>Vergi No</th> */}
+              <th style={{ width: 120, padding: 12 }}>Firma Telefon</th>
+              <th style={{ width: 120, padding: 12 }}>Firma E-posta</th>
+              <th style={{ width: 120, padding: 12 }}> </th>
             </tr>
           </thead>
           <tbody>
@@ -447,25 +460,25 @@ export default function LeadsTable() {
                   </td>
                   <td>
                     <Typography fontWeight="md">
-                      {/* <Chip
-                        variant="soft"
-                        size="sm"
-                        startDecorator={
-                          {
-                            Contact: <i data-feather="check" />,
-                            Account: <i data-feather="corner-up-left" />,
-                            Cancelled: <i data-feather="x" />,
-                          }[row.companyname]
-                        }
-                        color={
-                          {
-                            Account: "success",
-                            Contact: "danger",
-                            Cancelled: "neutral",
-                          }[row.companyname] as ColorPaletteProp
-                        }
-                      >{row.companyname}
-                      </Chip> */}
+                      {/* <Chip
+                        variant="soft"
+                        size="sm"
+                        startDecorator={
+                          {
+                            Contact: <i data-feather="check" />,
+                            Account: <i data-feather="corner-up-left" />,
+                            Cancelled: <i data-feather="x" />,
+                          }[row.companyname]
+                        }
+                        color={
+                          {
+                            Account: "success",
+                            Contact: "danger",
+                            Cancelled: "neutral",
+                          }[row.companyname] as ColorPaletteProp
+                        }
+                      >{row.companyname}
+                      </Chip> */}
                       <Chip
                         variant="soft"
                         size="sm"
@@ -481,7 +494,7 @@ export default function LeadsTable() {
                       </Chip>
                     </Typography>
                   </td>
-                  {/* <td>{row.companyname}</td> */}
+                  {/* <td>{row.companyname}</td> */}
                   <td>
                     {row.companyname}
                   </td>
@@ -511,7 +524,7 @@ export default function LeadsTable() {
             ) : (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center" }}>
-                  {leads === null ? "Loading..." : "No matching contacts found."}
+                  {leads === null ? "Loading..." : "No matching contacts found."}
                 </td>
               </tr>
             )}

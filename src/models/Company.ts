@@ -17,7 +17,7 @@ export type Company = {
   GroupAccountName: string;
   LeadSource: number;
   CustomerSector: string;
-  IsBranch: string;
+  IsBranch: boolean;
   CardType: string;
   Description: string;
 

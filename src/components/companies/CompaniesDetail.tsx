@@ -8,6 +8,8 @@ import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Company } from "../../models/Company";
 import { getCRMData } from "../../requests/ApiCall";
 import { CompaniesSubDetail } from "./CompaniesSubDetail";
+import GenericAutocomplete from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/Lookup";
 
 const gridItemSize = {
     xs: 12,
@@ -84,7 +86,7 @@ const CompaniesDetail: React.FC = () => {
         CardType: "",
         CustomerSector: "",
         InvoiceName: "",
-        IsBranch: "",
+        IsBranch:  false,
         Description: "",
 
         OwnerId: "",
@@ -112,30 +114,28 @@ const CompaniesDetail: React.FC = () => {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-
-        // const jsonString = JSON.stringify(value);
-        // console.log(value);
-        // console.log(jsonString);
         setAccount((prevAccount) => ({
             ...prevAccount,
             [name]: value,
         }));
     };
 
-    // const handleCompanyChange = (
-    //     event: React.SyntheticEvent,
-    //     value: any[],
-    //     reason: AutocompleteChangeReason,
-    //     details?: AutocompleteChangeDetails<any>
-    // ) => {
-    //     const jsonString = JSON.stringify(value);
-    //     console.log(value);
-    //     console.log(jsonString);
-    //     setAccount((prevAccount) => ({
-    //         ...prevAccount,
-    //         company: value,
-    //     }));
-    // };
+    const handleSelectFieldChange = (fieldId: keyof typeof account, fieldName: keyof typeof account) =>
+        (selectedOption: LookupOptionType | null) => {
+            if (selectedOption) {
+                setAccount(prevAccount => ({
+                    ...prevAccount,
+                    [fieldId]: selectedOption.Id,
+                    [fieldName]: selectedOption.Name
+                }));
+            } else {
+                setAccount(prevAccount => ({
+                    ...prevAccount,
+                    [fieldId]: "",
+                    [fieldName]: "",
+                }));
+            }
+        };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -165,18 +165,6 @@ const CompaniesDetail: React.FC = () => {
     const handleBack = () => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
-
-    // const handleSkip = () => {
-    //   if (!isStepOptional(activeStep)) {
-    //     throw new Error("You can't skip a step that isn't optional.");
-    //   }
-    //   setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    //   setSkipped((prevSkipped) => {
-    //     const newSkipped = new Set(prevSkipped.values());
-    //     newSkipped.add(activeStep);
-    //     return newSkipped;
-    //   });
-    // };
 
     const handleReset = () => {
         setActiveStep(0);
@@ -367,11 +355,21 @@ const CompaniesDetail: React.FC = () => {
                                 value={account.IsAccountType}
                                 onChange={handleInputChange}
                             >
-                                <MenuItem value="1">Şahıs</MenuItem>
-                                <MenuItem value="2">Kurumsal</MenuItem>
+                                <MenuItem value="false">Kurumsal</MenuItem>
+                                <MenuItem value="true">Şahıs</MenuItem>
+                                
                             </TextField>
                         </Grid>
                         <Grid item {...gridItemSize}>
+                            <GenericAutocomplete
+                                apiEndpoint="api/search-companytype-by-name"
+                                label="Şirket Tipi"
+                                getCRMData={getCRMData}
+                                selectedValue={account.CompanyTypeId ? { Id: account.CompanyTypeId, Name: account.CompanyTypeName } : null}
+                                onValueChange={handleSelectFieldChange('CompanyTypeId', 'CompanyTypeName')}
+                            />
+                        </Grid>
+                        {/* <Grid item {...gridItemSize}>
                             <TextField
                                 select
                                 label="Şirket Tipi"
@@ -385,7 +383,7 @@ const CompaniesDetail: React.FC = () => {
                                 <MenuItem value="1">Şahıs</MenuItem>
                                 <MenuItem value="2">Anonim</MenuItem>
                             </TextField>
-                        </Grid>
+                        </Grid> */}
                         <Grid item {...gridItemSize}>
                             <TextField
                                 label="Vergi Dairesi"
@@ -400,6 +398,7 @@ const CompaniesDetail: React.FC = () => {
                         <Grid item {...gridItemSize}>
                             <TextField
                                 label="Vergi Numarası"
+                                disabled
                                 fullWidth
                                 variant="outlined"
                                 id="TaxNumber"
@@ -419,7 +418,7 @@ const CompaniesDetail: React.FC = () => {
                                 onChange={handleInputChange}
                             />
                         </Grid>
-                        <Grid item {...gridItemSize}>
+                        {/* <Grid item {...gridItemSize}>
                             <TextField
                                 label="Grup Firma"
                                 fullWidth
@@ -428,6 +427,15 @@ const CompaniesDetail: React.FC = () => {
                                 name="GroupAccountName"
                                 value={account.GroupAccountName}
                                 onChange={handleInputChange}
+                            />
+                        </Grid> */}
+                        <Grid item {...gridItemSize}>
+                            <GenericAutocomplete
+                                apiEndpoint="api/search-lookup-by-name/rms_groupaccount/rms_name"
+                                label="Grup Firma"
+                                getCRMData={getCRMData}
+                                selectedValue={account.GroupAccountId ? { Id: account.GroupAccountId, Name: account.GroupAccountName } : null}
+                                onValueChange={handleSelectFieldChange('GroupAccountId', 'GroupAccountName')}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -438,19 +446,25 @@ const CompaniesDetail: React.FC = () => {
                                 id="CustomerSector"
                                 name="CustomerSector"
                                 value={account.CustomerSector}
+                                disabled
                                 onChange={handleInputChange}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
+                                select
                                 label="Firma/Şube"
                                 fullWidth
                                 variant="outlined"
                                 id="IsBranch"
                                 name="IsBranch"
-                                value={account.IsBranch}
+                                value={account.IsBranch?1:0}
                                 onChange={handleInputChange}
-                            />
+                            >
+                                <MenuItem value=""></MenuItem>
+                                <MenuItem value={0}>Firma</MenuItem>
+                                <MenuItem value={1}>Şube</MenuItem>
+                            </TextField>
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
@@ -486,7 +500,7 @@ const CompaniesDetail: React.FC = () => {
                                 onChange={handleInputChange}
                             />
                         </Grid>
-                    </Grid>
+                    </Grid >
                 );
             case 1:
                 return (

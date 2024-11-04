@@ -116,10 +116,6 @@ const LeadsCreate: React.FC = () => {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-
-        // const jsonString = JSON.stringify(value);
-        // console.log(value);
-        // console.log(jsonString);
         setLead((prevLead) => ({
             ...prevLead,
             [name]: value,
@@ -134,6 +130,7 @@ const LeadsCreate: React.FC = () => {
             }));
         }
     };
+
     const handleCountryChange = (selectedOption: LookupOptionType | null) => {
         if (selectedOption) {
             setLead(prevLead => ({
@@ -150,7 +147,6 @@ const LeadsCreate: React.FC = () => {
             }));
         }
     };
-
     const handleCityChange = (selectedOption: LookupOptionType | null) => {
         if (selectedOption) {
             setLead(prevLead => ({
@@ -196,6 +192,37 @@ const LeadsCreate: React.FC = () => {
             }));
         }
     };
+    const handleNeighbourhoodChange = (selectedOption: LookupOptionType | null) => {
+        if (selectedOption) {
+            setLead(prevLead => ({
+                ...prevLead,
+                NeighbourhoodId: selectedOption.Id,
+                Neighbourhood: selectedOption.Name
+            }));
+        } else {
+            setLead(prevLead => ({
+                ...prevLead,
+                NeighbourhoodId: "",
+                Neighbourhood: "",
+            }));
+        }
+    };
+    const handleSelectFieldChange = (fieldId: keyof typeof lead, fieldName: keyof typeof lead) =>
+        (selectedOption: LookupOptionType | null) => {
+            if (selectedOption) {
+                setLead(prevLead => ({
+                    ...prevLead,
+                    [fieldId]: selectedOption.Id,
+                    [fieldName]: selectedOption.Name
+                }));
+            } else {
+                setLead(prevLead => ({
+                    ...prevLead,
+                    [fieldId]: "",
+                    [fieldName]: "",
+                }));
+            }
+        };
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -342,8 +369,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.BrandName}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.BrandName}
+                                helperText={errors.BrandName ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -356,8 +383,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.BusinessPhone}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.BusinessPhone}
+                                helperText={errors.BusinessPhone ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
 
@@ -371,12 +398,23 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.BusinessEmailAddress}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.BusinessEmailAddress}
+                                helperText={errors.BusinessEmailAddress ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
-
                         <Grid item {...gridItemSize}>
+                            <GenericAutocomplete
+                                apiEndpoint="api/get-source"
+                                label="Müşteri Aday Kaynağı"
+                                getCRMData={getCRMData}
+                                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource } : null}
+                                onValueChange={handleSelectFieldChange('LeadSourceCode', 'LeadSource')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.LeadSource} // Hata kontrolü
+                                helperText={errors.LeadSource ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                            />
+                        </Grid>
+                        {/* <Grid item {...gridItemSize}>
                             <TextField
                                 label="Müşteri Aday Kaynağı"
                                 fullWidth
@@ -386,10 +424,10 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.LeadSource}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.LeadSource}
+                                helperText={errors.LeadSource ? 'Bu alan zorunludur' : ''}
                             />
-                        </Grid>
+                        </Grid> */}
 
                         {/* İLGİLİ KİŞİ READONLY */}
                         <Grid item {...gridItemSize}>
@@ -402,8 +440,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.FirstName}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.FirstName}
+                                helperText={errors.FirstName ? 'Bu alan zorunludur' : ''}
                             // InputProps={{
                             //     readOnly: true,
                             // }}
@@ -420,8 +458,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.LastName}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.LastName}
+                                helperText={errors.LastName ? 'Bu alan zorunludur' : ''}
                             // InputProps={{
                             //     readOnly: true,
                             // }}
@@ -433,7 +471,7 @@ const LeadsCreate: React.FC = () => {
                                 label="Yetkili Unvanı"
                                 getCRMData={getCRMData}
                                 selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName } : null}
-                                onValueChange={handleJobTitleChange}
+                                onValueChange={handleSelectFieldChange('JobTitleId', 'JobTitleName')}
                             />
                         </Grid>
 
@@ -447,8 +485,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.EmailAddress}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.EmailAddress}
+                                helperText={errors.EmailAddress ? 'Bu alan zorunludur' : ''}
                             // InputProps={{
                             //     readOnly: true,
                             // }}
@@ -465,8 +503,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.MobilePhone}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.MobilePhone}
+                                helperText={errors.MobilePhone ? 'Bu alan zorunludur' : ''}
                             // InputProps={{
                             //     readOnly: true,
                             // }}
@@ -483,8 +521,8 @@ const LeadsCreate: React.FC = () => {
                                 value={lead.WebsiteUrl}
                                 onChange={handleInputChange}
                                 required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
+                                error={!!errors.WebsiteUrl}
+                                helperText={errors.WebsiteUrl ? 'Bu alan zorunludur' : ''}
                             // InputProps={{
                             //     readOnly: true,
                             // }}
@@ -499,12 +537,15 @@ const LeadsCreate: React.FC = () => {
                     <Grid container spacing={2}>
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
-                            
+
                                 apiEndpoint="api/search-country-by-name"
                                 label="Ülke"
                                 getCRMData={getCRMData}
                                 selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName } : null}
-                                onValueChange={handleCountryChange}
+                                onValueChange={handleSelectFieldChange('CountryId', 'CountryName')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.CountryId} // Hata kontrolü
+                                helperText={errors.CountryId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -513,7 +554,10 @@ const LeadsCreate: React.FC = () => {
                                 label="İl"
                                 getCRMData={getCRMData}
                                 selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName } : null}
-                                onValueChange={handleCityChange}
+                                onValueChange={handleSelectFieldChange('CityId', 'CityName')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.CityId} // Hata kontrolü
+                                helperText={errors.CityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                             />
                         </Grid>
 
@@ -523,7 +567,10 @@ const LeadsCreate: React.FC = () => {
                                 label="İlçe"
                                 getCRMData={getCRMData}
                                 selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName } : null}
-                                onValueChange={handleTownChange}
+                                onValueChange={handleSelectFieldChange('TownId', 'TownName')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.TownId} // Hata kontrolü
+                                helperText={errors.TownId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -531,79 +578,13 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-neighbourhood-by-name"
                                 label="Mahalle"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.Neighbourhood ? { Id: lead.Neighbourhood, Name: lead.TownName } : null}
-                                onValueChange={handleTownChange}
+                                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood } : null}
+                                onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.CityId} // Hata kontrolü
+                                helperText={errors.CityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                             />
                         </Grid>
-                        {/* <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Ülke"
-                                fullWidth
-                                variant="outlined"
-                                id="Country"
-                                name="Country"
-                                value={lead.Country}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }} 
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="İl"
-                                fullWidth
-                                variant="outlined"
-                                id="City"
-                                name="City"
-                                value={lead.City}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="İlçe"
-                                fullWidth
-                                variant="outlined"
-                                id="Town"
-                                name="Town"
-                                value={lead.Town}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
-                            />
-                        </Grid> */}
-                        {/* <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Mahalle"
-                                fullWidth
-                                variant="outlined"
-                                id="Neighbourhood"
-                                name="Neighbourhood"
-                                value={lead.Neighbourhood}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.CompanyName}
-                                helperText={errors.CompanyName ? 'Bu alan zorunludur' : ''}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
-                            />
-
-                        </Grid> */}
                         <Grid item {...gridItemSize}>
                             <TextField
                                 label="Adres Satırı"
