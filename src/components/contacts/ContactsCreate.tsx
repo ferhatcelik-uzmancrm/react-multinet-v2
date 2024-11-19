@@ -86,19 +86,20 @@ const ContactsCreate: React.FC = () => {
         ParentCustomerName: "",
         TcNo: "",
         GenderCode: 0,
-        BirthDate: "",
+        BirthDate: new Date(),
         MobilePhone: "",
         Telephone: "",
         EmailAddress: "",
         CountryId: "",
-        CountryName: "",
-        City:"",
+        Country: "",
+        City: "",
         CityId: "",
-        CityName:"",
+        CityName: "",
+        NeighbourhoodId: "",
         Neighbourhood: "",
-        Town:"",
+        Town: "",
         TownId: "",
-        TownName:"",
+        TownName: "",
         PostalCode: "",
         AddressLine: "",
         OwnerId: crmOwner || "",
@@ -147,11 +148,10 @@ const ContactsCreate: React.FC = () => {
             setContact(prevContact => ({
                 ...prevContact,
                 CountryId: "",
-                CountryName: "",
+                Country: "",
             }));
         }
     };
-
     const handleCityChange = (selectedOption: LookupOptionType | null) => {
         if (selectedOption) {
             setContact(prevContact => ({
@@ -167,7 +167,6 @@ const ContactsCreate: React.FC = () => {
             }));
         }
     };
-
     const handleTownChange = (selectedOption: LookupOptionType | null) => {
         if (selectedOption) {
             setContact(prevContact => ({
@@ -183,6 +182,23 @@ const ContactsCreate: React.FC = () => {
             }));
         }
     };
+
+    const handleSelectFieldChange = (idField: string, nameField: string) => 
+        (value: LookupOptionType | LookupOptionType[] | null) => {
+          if (Array.isArray(value)) {
+            // Çoklu seçim modunda birden fazla seçili öğe varsa
+            const selectedIds = value.map(option => option.Id).join(', ');
+            const selectedNames = value.map(option => option.Name).join(', ');
+            setContact((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+          } else {
+            // Tekli seçim modunda
+            setContact((prev) => ({
+              ...prev,
+              [idField]: value ? value.Id : null,
+              [nameField]: value ? value.Name : '',
+            }));
+          }
+        };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
@@ -212,9 +228,10 @@ const ContactsCreate: React.FC = () => {
             // 'TcNo',
             // 'GenderCode',
             // 'BirthDate',
-            // 'MobilePhone',
+            'ParentCustomerId',
+            'MobilePhone',
             // 'Telephone',
-            // 'EmailAddress',
+            'EmailAddress',
             // 'Country',
             // 'City',
             // 'Neighbourhood',
@@ -337,6 +354,9 @@ const ContactsCreate: React.FC = () => {
                                 name="FirstName"
                                 value={contact.FirstName}
                                 onChange={handleInputChange}
+                                required
+                                error={!!errors.FirstName}
+                                helperText={errors.FirstName ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -348,6 +368,9 @@ const ContactsCreate: React.FC = () => {
                                 name="LastName"
                                 value={contact.LastName}
                                 onChange={handleInputChange}
+                                required
+                                error={!!errors.FirstName}
+                                helperText={errors.FirstName ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -356,7 +379,7 @@ const ContactsCreate: React.FC = () => {
                                 label="Yetkili Unvanı"
                                 getCRMData={getCRMData}
                                 selectedValue={contact.ContactTitleId ? { Id: contact.ContactTitleId, Name: contact.ContactTitleName } : null}
-                                onValueChange={handleContactTitleChange}
+                                onValueChange={handleSelectFieldChange('ContactTitleId', 'ContactTitleName')}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -365,7 +388,10 @@ const ContactsCreate: React.FC = () => {
                                 label="Firması"
                                 getCRMData={getCRMData}
                                 selectedValue={contact.ParentCustomerId ? { Id: contact.ParentCustomerId, Name: contact.ParentCustomerName } : null}
-                                onValueChange={handleParentCustomerChange}
+                                onValueChange={handleSelectFieldChange('ParentCustomerId', 'ParentCustomerName')}
+                                required={true} // Alan zorunlu
+                                error={!!errors.ParentCustomerId} // Hata kontrolü
+                                helperText={errors.ParentCustomerId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -390,20 +416,23 @@ const ContactsCreate: React.FC = () => {
                                 value={contact.GenderCode}
                                 onChange={handleInputChange}
                             >
-                                <MenuItem value="1">Erkek</MenuItem>
-                                <MenuItem value="2">Kadın</MenuItem>
+                                <MenuItem value={1}>Erkek</MenuItem>
+                                <MenuItem value={2}>Kadın</MenuItem>
                             </TextField>
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
-                                label="Doğum Tarihi"
                                 type="date"
+                                label="Doğum Tarihi"
                                 fullWidth
                                 variant="outlined"
-                                name="BirthDate"
                                 id="BirthDate"
+                                name="BirthDate"
                                 value={contact.BirthDate}
                                 onChange={handleInputChange}
+                                InputLabelProps={{
+                                    shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
+                                  }}
                             />
                         </Grid>
                     </Grid>
@@ -422,6 +451,9 @@ const ContactsCreate: React.FC = () => {
                                 name="MobilePhone"
                                 value={contact.MobilePhone}
                                 onChange={handleInputChange}
+                                required
+                                error={!!errors.MobilePhone}
+                                helperText={errors.MobilePhone ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -444,6 +476,9 @@ const ContactsCreate: React.FC = () => {
                                 name="EmailAddress"
                                 value={contact.EmailAddress}
                                 onChange={handleInputChange}
+                                required
+                                error={!!errors.EmailAddress}
+                                helperText={errors.EmailAddress ? 'Bu alan zorunludur' : ''}
                             />
                         </Grid>
                     </Grid >
@@ -457,12 +492,12 @@ const ContactsCreate: React.FC = () => {
                         {/* ADRES READONLY */}
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
-                            
+
                                 apiEndpoint="api/search-country-by-name"
                                 label="Ülke"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.CountryId ? { Id: contact.CountryId, Name: contact.CountryName } : null}
-                                onValueChange={handleCountryChange}
+                                selectedValue={contact.CountryId ? { Id: contact.CountryId, Name: contact.Country } : null}
+                                onValueChange={handleSelectFieldChange('CountryId', 'Country')}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -471,7 +506,7 @@ const ContactsCreate: React.FC = () => {
                                 label="İl"
                                 getCRMData={getCRMData}
                                 selectedValue={contact.CityId ? { Id: contact.CityId, Name: contact.CityName } : null}
-                                onValueChange={handleCityChange}
+                                onValueChange={handleSelectFieldChange('CityId', 'CityName')}
                             />
                         </Grid>
                         {/* <Grid item {...gridItemSize}>
@@ -491,7 +526,7 @@ const ContactsCreate: React.FC = () => {
                                 label="İlçe"
                                 getCRMData={getCRMData}
                                 selectedValue={contact.TownId ? { Id: contact.TownId, Name: contact.TownName } : null}
-                                onValueChange={handleTownChange}
+                                onValueChange={handleSelectFieldChange('TownId', 'TownName')}
                             />
                         </Grid>
                         {/* <Grid item {...gridItemSize}>
@@ -506,6 +541,15 @@ const ContactsCreate: React.FC = () => {
                             />
                         </Grid> */}
                         <Grid item {...gridItemSize}>
+                            <GenericAutocomplete
+                                apiEndpoint="api/search-neighbourhood-by-name"
+                                label="Mahalle"
+                                getCRMData={getCRMData}
+                                selectedValue={contact.NeighbourhoodId ? { Id: contact.NeighbourhoodId, Name: contact.Neighbourhood } : null}
+                                onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
+                            />
+                        </Grid>
+                        {/* <Grid item {...gridItemSize}>
                             <TextField
                                 label="Mahalle"
                                 fullWidth
@@ -515,7 +559,7 @@ const ContactsCreate: React.FC = () => {
                                 value={contact.Neighbourhood}
                                 onChange={handleInputChange}
                             />
-                        </Grid>
+                        </Grid> */}
                         <Grid item {...gridItemSize}>
                             <TextField
                                 label="Posta Kodu"

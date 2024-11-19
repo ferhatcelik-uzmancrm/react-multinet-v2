@@ -30,6 +30,7 @@ import { handleExport } from "../../helper/Export";
 import { InterestedProduct, InterestedProductRequest } from "../../models/InterestedProduct";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
 
+
 type Order = "asc" | "desc";
 
 const rows = fakeCompanyData
@@ -86,6 +87,7 @@ export default function InterestedProductsTable() {
         navigate(`/interestedproducts/detail/${companyId}`);
         /*, { state: { data: matchedData } });*/
     };
+
     const createClick = () => {
         navigate(`/interestedproducts/create/`);
     };
@@ -97,8 +99,16 @@ export default function InterestedProductsTable() {
     const [interestedproducts, setInterestedproducts] = useState<InterestedProduct[] | null>([]);
     const [loading, setLoading] = useState(false)
 
+    // const [data, setData] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [paginatedData, setPaginatedData] = useState<InterestedProduct[] | null>([]);
+    const itemsPerPage = 10;
+
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+
 
     const handleSearchInputChange = (
         event: React.ChangeEvent<HTMLInputElement>
@@ -119,12 +129,22 @@ export default function InterestedProductsTable() {
             try {
                 const response = await getCRMData('api/get-interestedproducts', interestedProductRequest);
                 setInterestedproducts(response.data);
+                // setData(response.data);
             } catch (error) {
                 alert(error);
             }
         };
         fetchData();
     }, [interestedProductRequest]);
+
+    useEffect(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const currentData = interestedproducts?.slice(startIndex, startIndex + itemsPerPage) || [];
+        setPaginatedData(currentData);
+    }, [currentPage, interestedproducts]);
+
+    const totalPages = interestedproducts ? Math.ceil(interestedproducts.length / itemsPerPage) : 0;
+    console.log("Total Pages: ", totalPages)
 
     const handleApiSearch = async () => {
         try {
@@ -151,41 +171,75 @@ export default function InterestedProductsTable() {
         }
     };
 
-    const filteredRows = interestedproducts !== null && Array.isArray(interestedproducts)
-        ? interestedproducts.filter((row) =>
-            (row.InterestedProductId?.toString().includes(searchQuery))
-            // ||
+    const renderPagination = () => {
+        let pageNumbers: (number | string)[] = [];
+
+        //Eğer toplam sayfa sayısı 10'dan fazla ise özel mantık
+        if (totalPages > 10) {
+            // İlk 5 sayfa
+            for (let i = 1; i <= 9; i++) {
+                pageNumbers.push(i);
+            }
+
+            // Eğer şu anki sayfa ilk 5 sayfa sonrasında ise, 5. sayfadan sonra 3 tane daha sayfa göster
+            if (currentPage >= 9 && currentPage < totalPages - 1) {
+
+                for (let i = currentPage + 1; i <= currentPage + 9; i++) {
+                    if (i > 0 && i <= totalPages) {
+                        pageNumbers.push(i);
+
+                    }
+
+                }
+                pageNumbers = pageNumbers.slice(8);
+                // pageNumbers.push('...');
+            }
+
+            // Son sayfa
+            for (let i = totalPages; i <= totalPages; i++) {
+                pageNumbers.push('...');
+                pageNumbers.push(i);
+            }
+        } else {
+            // Eğer toplam sayfa sayısı 10'dan azsa tüm sayfaları göster
+            for (let i = 1; i <= totalPages; i++) {
+                pageNumbers.push(i);
+            }
+        }
+
+        return pageNumbers;
+    };
+
+    const filteredRows = paginatedData !== null && Array.isArray(paginatedData)
+        ? paginatedData.filter((row) =>
+            (row.InterestedProductId?.toString().includes(searchQuery)) ||
+            row.LeadId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.AccountId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.OpportunityId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) 
             // row.QuoteApprovalStatus?.toLowerCase().includes(searchQuery.toLowerCase())
         ) : [];
 
     const renderFilters = () => (
         <React.Fragment>
-            <FormControl size="sm">
-                <FormLabel>Durum</FormLabel>
-                <Select
-                    size="md"
-                    placeholder="Filter by status"
-                    slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
+            <FormControl sx={{ flex: 0 }} size="md">
+                <FormLabel>İlgilenilen ürün oluştur</FormLabel>
+                <MaterialButton
+                    variant="contained"
+                    sx={{
+                        border: "none",
+                        textTransform: "capitalize",
+                        color: "white",
+                        backgroundColor: "#211d3c",
+                        fontSize: "16px",
+                        "&:hover": {
+                            backgroundColor: "#f7a724",
+                        },
+                    }}
+                    disabled={loading}
+                    onClick={createClick}
                 >
-                    <Option value="paid">Paid</Option>
-                    <Option value="pending">Pending</Option>
-                    <Option value="refunded">Refunded</Option>
-                    <Option value="cancelled">Cancelled</Option>
-                </Select>
-            </FormControl>
-
-            <FormControl size="sm">
-                <FormLabel>Kategori</FormLabel>
-                <Select size="md" placeholder="All">
-                    <Option value="all">All</Option>
-                </Select>
-            </FormControl>
-
-            <FormControl size="sm">
-                <FormLabel>Müşteri</FormLabel>
-                <Select size="md" placeholder="All">
-                    <Option value="all">All</Option>
-                </Select>
+                    Yeni Ürün
+                </MaterialButton>
             </FormControl>
         </React.Fragment>
     );
@@ -231,20 +285,17 @@ export default function InterestedProductsTable() {
                     color="neutral"
                     onClick={() => setOpen(true)}
                 >
-                    <i data-feather="filter" />
+                    <i data-feather="create" />
                 </IconButton>
                 <Modal open={open} onClose={() => setOpen(false)}>
                     <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
                         <ModalClose />
-                        <Typography id="filter-modal" level="h2">
-                            Filters
-                        </Typography>
                         <Divider sx={{ my: 2 }} />
                         <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             {renderFilters()}
-                            <Button color="primary" onClick={() => setOpen(false)}>
+                            {/* <Button color="primary" onClick={() => setOpen(false)}>
                                 Submit
-                            </Button>
+                            </Button> */}
                         </Sheet>
                     </ModalDialog>
                 </Modal>
@@ -268,7 +319,7 @@ export default function InterestedProductsTable() {
                     },
                 }}
             >
-                <FormControl sx={{ flex: 1 }} size="sm">
+                <FormControl sx={{ flex: 1 }} size="md">
                     <FormLabel>İlgilenilen ürün ara</FormLabel>
                     <Input
                         size="md"
@@ -308,26 +359,7 @@ export default function InterestedProductsTable() {
                 </FormControl>
 
                 {renderFilters()}
-                <FormControl sx={{ flex: 0 }} size="sm">
-                    <FormLabel>İlgilenilen ürün oluştur</FormLabel>
-                    <MaterialButton
-                        variant="contained"
-                        sx={{
-                            border: "none",
-                            textTransform: "capitalize",
-                            color: "white",
-                            backgroundColor: "#211d3c",
-                            fontSize: "16px",
-                            "&:hover": {
-                                backgroundColor: "#f7a724",
-                            },
-                        }}
-                        disabled={loading}
-                        onClick={createClick}
-                    >
-                        Yeni Ürün
-                    </MaterialButton>
-                </FormControl>
+
 
             </Box>
             <Sheet
@@ -421,7 +453,7 @@ export default function InterestedProductsTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {interestedproducts !== null && Array.isArray(interestedproducts) ? (
+                        {paginatedData !== null && Array.isArray(paginatedData) ? (
                             stableSort(filteredRows, getComparator(order, "InterestedProductId")).map((row) => (
                                 <tr key={row.InterestedProductId}>
                                     <td style={{ textAlign: "center" }}>
@@ -505,7 +537,7 @@ export default function InterestedProductsTable() {
                 sx={{
                     pt: 4,
                     gap: 1,
-                    [`& .${iconButtonClasses.root}`]: { borderRadius: "50%" },
+                    [`& .MuiIconButton-root`]: { borderRadius: "50%" },
                     display: {
                         xs: "none",
                         md: "flex",
@@ -517,21 +549,40 @@ export default function InterestedProductsTable() {
                     variant="plain"
                     color="neutral"
                     startDecorator={<i data-feather="arrow-left" />}
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
                 >
                     Önceki
                 </Button>
 
                 <Box sx={{ flex: 1 }} />
-                {["1", "2", "3", "…", "8", "9", "10"].map((page) => (
+                {renderPagination().map((page, index) => (
+                    <IconButton
+                        key={index}
+                        size="sm"
+                        variant={page === currentPage ? "outlined" : "plain"}
+                        color="neutral"
+                        onClick={() => {
+                            // "..." butonlarına tıklanamaz
+                            if (page !== '...') {
+                                setCurrentPage(Number(page));
+                            }
+                        }}
+                    >
+                        {page === '...' ? '...' : page}
+                    </IconButton>
+                ))}
+                {/* {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <IconButton
                         key={page}
                         size="sm"
-                        variant={Number(page) ? "outlined" : "plain"}
+                        variant={page === currentPage ? "outlined" : "plain"}
                         color="neutral"
+                        onClick={() => setCurrentPage(page)}
                     >
                         {page}
                     </IconButton>
-                ))}
+                ))} */}
                 <Box sx={{ flex: 1 }} />
 
                 <Button
@@ -539,6 +590,10 @@ export default function InterestedProductsTable() {
                     variant="plain"
                     color="neutral"
                     endDecorator={<i data-feather="arrow-right" />}
+                    onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
                 >
                     Sonraki
                 </Button>

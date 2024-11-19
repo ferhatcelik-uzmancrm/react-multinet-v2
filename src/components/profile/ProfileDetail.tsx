@@ -36,7 +36,7 @@ const ProfileDetail: React.FC = () => {
   const closeAlert = () => {
     setAlertState((prevState) => ({ ...prevState, isOpen: false }));
   };
- 
+
   const [loading, setLoading] = useState(Boolean);
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
@@ -94,6 +94,22 @@ const ProfileDetail: React.FC = () => {
       }));
     }
   };
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setProfile((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+      } else {
+        // Tekli seçim modunda
+        setProfile((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
+        }));
+      }
+    };
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
@@ -305,7 +321,7 @@ const ProfileDetail: React.FC = () => {
                       label="İl"
                       getCRMData={getCRMData}
                       selectedValue={profile.City ? { Id: profile.City.Id, Name: profile.City.Name } : null}
-                      onValueChange={handleCityChange}
+                      onValueChange={handleSelectFieldChange('Id', 'Name')}
                     />
                   </Grid>
                 </Grid>

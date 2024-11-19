@@ -197,19 +197,19 @@ const LeadsDetail: React.FC = () => {
       }));
     }
   };
-  const handleSelectFieldChange = (fieldId: keyof typeof lead, fieldName: keyof typeof lead) =>
-    (selectedOption: LookupOptionType | null) => {
-      if (selectedOption) {
-        setLead(prevLead => ({
-          ...prevLead,
-          [fieldId]: selectedOption.Id,
-          [fieldName]: selectedOption.Name
-        }));
+  const handleSelectFieldChange = (idField: string, nameField: string) => 
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setLead((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
       } else {
-        setLead(prevLead => ({
-          ...prevLead,
-          [fieldId]: "",
-          [fieldName]: "",
+        // Tekli seçim modunda
+        setLead((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
         }));
       }
     };

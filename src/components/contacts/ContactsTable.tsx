@@ -173,7 +173,7 @@ export default function ContactsTable() {
   const renderFilters = () => (
     <React.Fragment>
       <FormControl size="sm">
-        <FormLabel>Durum</FormLabel>
+        {/* <FormLabel>Durum</FormLabel>
         <Select
           size="md"
           placeholder="Filter by status"
@@ -183,21 +183,21 @@ export default function ContactsTable() {
           <Option value="pending">Pending</Option>
           <Option value="refunded">Refunded</Option>
           <Option value="cancelled">Cancelled</Option>
-        </Select>
+        </Select> */}
       </FormControl>
 
       <FormControl size="sm">
-        <FormLabel>Kategori</FormLabel>
+        {/* <FormLabel>Kategori</FormLabel>
         <Select size="md" placeholder="All">
           <Option value="all">All</Option>
-        </Select>
+        </Select> */}
       </FormControl>
 
       <FormControl size="sm">
-        <FormLabel>Müşteri</FormLabel>
+        {/* <FormLabel>Müşteri</FormLabel>
         <Select size="md" placeholder="All">
           <Option value="all">All</Option>
-        </Select>
+        </Select> */}
       </FormControl>
     </React.Fragment>
   );

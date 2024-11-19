@@ -95,6 +95,9 @@ export default function OpportunitiesTable() {
     const [searchQuery, setSearchQuery] = useState("");
     const [opportunities, setOpportunities] = useState<Opportunity[] | null>([]);
     const [loading, setLoading] = useState(false)
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [paginatedData, setPaginatedData] = useState<Opportunity[] | null>([]);
+    const itemsPerPage = 10;
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -118,8 +121,8 @@ export default function OpportunitiesTable() {
             try {
                 const response = await getCRMData('api/get-opportunities', opportunityRequest);
                 setOpportunities(response.data);
-                console.log("IsAccount: ", response.data[0].id);
-                console.log("Companies: " + JSON.stringify(response.data));
+                // console.log("IsAccount: ", response.data[0].id);
+                // console.log("Companies: " + JSON.stringify(response.data));
             } catch (error) {
                 alert(error);
             }
@@ -129,6 +132,14 @@ export default function OpportunitiesTable() {
         fetchData();
     }, [opportunityRequest]); // Now opportunityRequest is a stable value, so it's fine to include it as a dependency
 
+    useEffect(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const currentData = opportunities?.slice(startIndex, startIndex + itemsPerPage) || [];
+        setPaginatedData(currentData);
+    }, [currentPage, opportunities]);
+
+    const totalPages = opportunities ? Math.ceil(opportunities.length / itemsPerPage) : 0;
+    console.log("Total Pages: ", totalPages)
 
     const handleApiSearch = async () => {
         try {
@@ -159,42 +170,74 @@ export default function OpportunitiesTable() {
         }
     };
 
-    const filteredRows = opportunities !== null && Array.isArray(opportunities)
-        ? opportunities.filter((row) =>
+    const renderPagination = () => {
+        let pageNumbers: (number | string)[] = [];
+
+        //Eğer toplam sayfa sayısı 10'dan fazla ise özel mantık
+        if (totalPages > 10) {
+            // İlk 5 sayfa
+            for (let i = 1; i <= 9; i++) {
+                pageNumbers.push(i);
+            }
+
+            // Eğer şu anki sayfa ilk 5 sayfa sonrasında ise, 5. sayfadan sonra 3 tane daha sayfa göster
+            if (currentPage >= 9 && currentPage < totalPages - 1) {
+
+                for (let i = currentPage + 1; i <= currentPage + 9; i++) {
+                    if (i > 0 && i <= totalPages) {
+                        pageNumbers.push(i);
+
+                    }
+
+                }
+                pageNumbers = pageNumbers.slice(8);
+                // pageNumbers.push('...');
+            }
+
+            // Son sayfa
+            for (let i = totalPages; i <= totalPages; i++) {
+                pageNumbers.push('...');
+                pageNumbers.push(i);
+            }
+        } else {
+            // Eğer toplam sayfa sayısı 10'dan azsa tüm sayfaları göster
+            for (let i = 1; i <= totalPages; i++) {
+                pageNumbers.push(i);
+            }
+        }
+
+        return pageNumbers;
+    };
+
+    const filteredRows = paginatedData !== null && Array.isArray(paginatedData)
+        ? paginatedData.filter((row) =>
             (row.OpportunityNumber?.toString().includes(searchQuery)) ||
             row.CustomerName?.toLowerCase().includes(searchQuery.toLowerCase())
         ) : [];
 
     const renderFilters = () => (
         <React.Fragment>
-            <FormControl size="sm">
-                <FormLabel>Durum</FormLabel>
-                <Select
-                    size="md"
-                    placeholder="Filter by status"
-                    slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
+            <FormControl sx={{ flex: 0 }} size="sm">
+                <FormLabel>Fırsat oluştur</FormLabel>
+                <MaterialButton
+                    variant="contained"
+                    sx={{
+                        border: "none",
+                        textTransform: "capitalize",
+                        color: "white",
+                        backgroundColor: "#211d3c",
+                        fontSize: "16px",
+                        "&:hover": {
+                            backgroundColor: "#f7a724",
+                        },
+                    }}
+                    disabled={loading}
+                    onClick={createClick}
                 >
-                    <Option value="paid">Paid</Option>
-                    <Option value="pending">Pending</Option>
-                    <Option value="refunded">Refunded</Option>
-                    <Option value="cancelled">Cancelled</Option>
-                </Select>
+                    Yeni Fırsat
+                </MaterialButton>
             </FormControl>
-
-            <FormControl size="sm">
-                <FormLabel>Kategori</FormLabel>
-                <Select size="md" placeholder="All">
-                    <Option value="all">All</Option>
-                </Select>
-            </FormControl>
-
-            <FormControl size="sm">
-                <FormLabel>Müşteri</FormLabel>
-                <Select size="md" placeholder="All">
-                    <Option value="all">All</Option>
-                </Select>
-            </FormControl>
-        </React.Fragment>
+        </React.Fragment >
     );
 
     return (
@@ -243,9 +286,6 @@ export default function OpportunitiesTable() {
                 <Modal open={open} onClose={() => setOpen(false)}>
                     <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
                         <ModalClose />
-                        <Typography id="filter-modal" level="h2">
-                            Filters
-                        </Typography>
                         <Divider sx={{ my: 2 }} />
                         <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             {renderFilters()}
@@ -315,26 +355,7 @@ export default function OpportunitiesTable() {
                 </FormControl>
 
                 {renderFilters()}
-                <FormControl sx={{ flex: 0 }} size="sm">
-                    <FormLabel>Fırsat oluştur</FormLabel>
-                    <MaterialButton
-                        variant="contained"
-                        sx={{
-                            border: "none",
-                            textTransform: "capitalize",
-                            color: "white",
-                            backgroundColor: "#211d3c",
-                            fontSize: "16px",
-                            "&:hover": {
-                                backgroundColor: "#f7a724",
-                            },
-                        }}
-                        disabled={loading}
-                        onClick={createClick}
-                    >
-                        Yeni Fırsat
-                    </MaterialButton>
-                </FormControl>
+
 
             </Box>
             <Sheet
@@ -515,7 +536,7 @@ export default function OpportunitiesTable() {
                 sx={{
                     pt: 4,
                     gap: 1,
-                    [`& .${iconButtonClasses.root}`]: { borderRadius: "50%" },
+                    [`& .MuiIconButton-root`]: { borderRadius: "50%" },
                     display: {
                         xs: "none",
                         md: "flex",
@@ -527,19 +548,27 @@ export default function OpportunitiesTable() {
                     variant="plain"
                     color="neutral"
                     startDecorator={<i data-feather="arrow-left" />}
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
                 >
                     Önceki
                 </Button>
 
                 <Box sx={{ flex: 1 }} />
-                {["1", "2", "3", "…", "8", "9", "10"].map((page) => (
+                {renderPagination().map((page, index) => (
                     <IconButton
-                        key={page}
+                        key={index}
                         size="sm"
-                        variant={Number(page) ? "outlined" : "plain"}
+                        variant={page === currentPage ? "outlined" : "plain"}
                         color="neutral"
+                        onClick={() => {
+                            // "..." butonlarına tıklanamaz
+                            if (page !== '...') {
+                                setCurrentPage(Number(page));
+                            }
+                        }}
                     >
-                        {page}
+                        {page === '...' ? '...' : page}
                     </IconButton>
                 ))}
                 <Box sx={{ flex: 1 }} />
@@ -549,6 +578,10 @@ export default function OpportunitiesTable() {
                     variant="plain"
                     color="neutral"
                     endDecorator={<i data-feather="arrow-right" />}
+                    onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
                 >
                     Sonraki
                 </Button>

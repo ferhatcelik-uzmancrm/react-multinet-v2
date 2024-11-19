@@ -120,21 +120,21 @@ const CompaniesDetail: React.FC = () => {
         }));
     };
 
-    const handleSelectFieldChange = (fieldId: keyof typeof account, fieldName: keyof typeof account) =>
-        (selectedOption: LookupOptionType | null) => {
-            if (selectedOption) {
-                setAccount(prevAccount => ({
-                    ...prevAccount,
-                    [fieldId]: selectedOption.Id,
-                    [fieldName]: selectedOption.Name
-                }));
-            } else {
-                setAccount(prevAccount => ({
-                    ...prevAccount,
-                    [fieldId]: "",
-                    [fieldName]: "",
-                }));
-            }
+    const handleSelectFieldChange = (idField: string, nameField: string) => 
+        (value: LookupOptionType | LookupOptionType[] | null) => {
+          if (Array.isArray(value)) {
+            // Çoklu seçim modunda birden fazla seçili öğe varsa
+            const selectedIds = value.map(option => option.Id).join(', ');
+            const selectedNames = value.map(option => option.Name).join(', ');
+            setAccount((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+          } else {
+            // Tekli seçim modunda
+            setAccount((prev) => ({
+              ...prev,
+              [idField]: value ? value.Id : null,
+              [nameField]: value ? value.Name : '',
+            }));
+          }
         };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

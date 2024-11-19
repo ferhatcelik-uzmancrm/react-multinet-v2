@@ -5,8 +5,10 @@ import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
+import GenericAutocomplete from "../../helper/Lookup";
 import { Phone } from "../../models/Phone";
-import { sendRequest } from "../../requests/ApiCall";
+import { LookupOptionType } from "../../models/Lookup";
+import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
 
@@ -83,10 +85,6 @@ const PhonesCreate: React.FC = () => {
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-
-    // const jsonString = JSON.stringify(value);
-    // console.log(value);
-    // console.log(jsonString);
     setPhone((prevPhone) => ({
       ...prevPhone,
       [name]: value,
@@ -101,12 +99,47 @@ const PhonesCreate: React.FC = () => {
       }));
     }
   };
-
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setPhone((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+      } else {
+        // Tekli seçim modunda
+        setPhone((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
+        }));
+      }
+    };
+  const handleSelectFieldChange2 = (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setPhone(prev => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setPhone(prev => ({
+          ...prev,
+          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+        }));
+      }
+    };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const requiredFields = [
       'Subject',
+      'From',
+      'To'
     ];
 
     const newErrors: { [key: string]: boolean } = {};
@@ -227,25 +260,44 @@ const PhonesCreate: React.FC = () => {
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-name/phonecall/from"
+                label="Arayan Kişi"
+                getCRMData={getCRMData}
+                selectedValue={phone.From ? { Id: phone.From.Id, Name: phone.From.Name } : null}
+                onValueChange={handleSelectFieldChange2('From')}
+                error={!!errors.From} // Hata kontrolü
+                helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
+              />
+              {/* <TextField
                 label="Gönderen"
                 fullWidth
                 variant="outlined"
                 name="From"
                 value={phone.From ? phone.From.Name : ''}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-name/phonecall/to"
+                label="Arama Hedefi"
+                getCRMData={getCRMData}
+                selectedValue={phone.To ? { Id: phone.To.Id, Name: phone.To.Name } : null}
+                onValueChange={handleSelectFieldChange2('To')}
+                error={!!errors.To} // Hata kontrolü
+                helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                isMulti={false}
+              />
+              {/* <TextField
                 label="Alıcı"
                 fullWidth
                 variant="outlined"
                 name="To"
                 value={phone.To ? phone.To.Name : ''}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
@@ -286,25 +338,43 @@ const PhonesCreate: React.FC = () => {
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/new_activitytype/new_name"
+                label="Aktivite Türü"
+                getCRMData={getCRMData}
+                selectedValue={phone.ActivityTypeId ? { Id: phone.ActivityTypeId.Id, Name: phone.ActivityTypeId.Name } : null}
+                onValueChange={handleSelectFieldChange2('ActivityTypeId')}
+                error={!!errors.ActivityTypeId} // Hata kontrolü
+                helperText={errors.ActivityTypeId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+              />
+              {/* <TextField
                 label="Etkinlik Türü"
                 fullWidth
                 variant="outlined"
                 name="ActivityTypeId"
                 value={phone.ActivityTypeId ? phone.ActivityTypeId.Name : ''}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/new_activityreason/new_name"
+                label="Aktivite Sebepleri"
+                getCRMData={getCRMData}
+                selectedValue={phone.ActivityReasonId ? { Id: phone.ActivityReasonId.Id, Name: phone.ActivityReasonId.Name } : null}
+                onValueChange={handleSelectFieldChange2('ActivityReasonId')}
+                error={!!errors.ActivityReasonId} // Hata kontrolü
+                helperText={errors.ActivityReasonId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+              />
+              {/* <TextField
                 label="Etkinlik Nedeni"
                 fullWidth
                 variant="outlined"
                 name="ActivityReasonId"
                 value={phone.ActivityReasonId ? phone.ActivityReasonId.Name : ''}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>

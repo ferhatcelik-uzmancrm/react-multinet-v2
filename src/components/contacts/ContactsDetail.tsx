@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, MenuItem, Step, StepLabel, Stepper, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
@@ -73,19 +73,20 @@ const ContactsDetail: React.FC = () => {
     ParentCustomerName: "",
     TcNo: "",
     GenderCode: 0,
-    BirthDate: "",
+    BirthDate: new Date(),
     MobilePhone: "",
     Telephone: "",
     EmailAddress: "",
     CountryId: "",
-    CountryName: "",
-    City:"",
+    Country: "",
+    City: "",
     CityId: "",
-    CityName:"",
+    CityName: "",
     Neighbourhood: "",
-    Town:"",
+    NeighbourhoodId: "",
+    Town: "",
     TownId: "",
-    TownName:"",
+    TownName: "",
     PostalCode: "",
     AddressLine: "",
     CreatedBy: "",
@@ -246,6 +247,7 @@ const ContactsDetail: React.FC = () => {
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
+                select
                 label="Cinsiyet"
                 fullWidth
                 variant="outlined"
@@ -256,7 +258,12 @@ const ContactsDetail: React.FC = () => {
                 InputProps={{
                   readOnly: true,
                 }}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={2}>Kadın</MenuItem>
+                <MenuItem value={1}>Erkek</MenuItem>
+
+              </TextField>
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
@@ -265,7 +272,7 @@ const ContactsDetail: React.FC = () => {
                 variant="outlined"
                 id="BirthDate"
                 name="BirthDate"
-                value={contact.BirthDate}
+                value={contact.BirthDate?contact.BirthDate.toLocaleDateString():""}
                 onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,
@@ -365,7 +372,7 @@ const ContactsDetail: React.FC = () => {
                 variant="outlined"
                 id="Country"
                 name="Country"
-                value={contact.CountryName}
+                value={contact.Country}
                 // onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,

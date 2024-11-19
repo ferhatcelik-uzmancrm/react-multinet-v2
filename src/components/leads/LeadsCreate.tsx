@@ -131,97 +131,21 @@ const LeadsCreate: React.FC = () => {
         }
     };
 
-    const handleCountryChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setLead(prevLead => ({
-                ...prevLead,
-                CountryId: selectedOption.Id,
-                CountryName: selectedOption.Name
+    const handleSelectFieldChange = (idField: string, nameField: string) => 
+        (value: LookupOptionType | LookupOptionType[] | null) => {
+          if (Array.isArray(value)) {
+            // Çoklu seçim modunda birden fazla seçili öğe varsa
+            const selectedIds = value.map(option => option.Id).join(', ');
+            const selectedNames = value.map(option => option.Name).join(', ');
+            setLead((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+          } else {
+            // Tekli seçim modunda
+            setLead((prev) => ({
+              ...prev,
+              [idField]: value ? value.Id : null,
+              [nameField]: value ? value.Name : '',
             }));
-            // setCityApiEndpoint(`api/search-city-by-name?countryId=${selectedOption.Id}`);
-        } else {
-            setLead(prevLead => ({
-                ...prevLead,
-                CountryId: "",
-                CountryName: "",
-            }));
-        }
-    };
-    const handleCityChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setLead(prevLead => ({
-                ...prevLead,
-                CityId: selectedOption.Id,
-                CityName: selectedOption.Name
-            }));
-        } else {
-            setLead(prevLead => ({
-                ...prevLead,
-                CityId: "",
-                CityName: "",
-            }));
-        }
-    };
-    const handleJobTitleChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setLead(prevLead => ({
-                ...prevLead,
-                JobTitleId: selectedOption.Id,
-                JobTitleName: selectedOption.Name
-            }));
-        } else {
-            setLead(prevLead => ({
-                ...prevLead,
-                JobTitleId: "",
-                JobTitleName: "",
-            }));
-        }
-    };
-    const handleTownChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setLead(prevLead => ({
-                ...prevLead,
-                TownId: selectedOption.Id,
-                TownName: selectedOption.Name
-            }));
-        } else {
-            setLead(prevLead => ({
-                ...prevLead,
-                TownId: "",
-                TownName: "",
-            }));
-        }
-    };
-    const handleNeighbourhoodChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setLead(prevLead => ({
-                ...prevLead,
-                NeighbourhoodId: selectedOption.Id,
-                Neighbourhood: selectedOption.Name
-            }));
-        } else {
-            setLead(prevLead => ({
-                ...prevLead,
-                NeighbourhoodId: "",
-                Neighbourhood: "",
-            }));
-        }
-    };
-    const handleSelectFieldChange = (fieldId: keyof typeof lead, fieldName: keyof typeof lead) =>
-        (selectedOption: LookupOptionType | null) => {
-            if (selectedOption) {
-                setLead(prevLead => ({
-                    ...prevLead,
-                    [fieldId]: selectedOption.Id,
-                    [fieldName]: selectedOption.Name
-                }));
-            } else {
-                setLead(prevLead => ({
-                    ...prevLead,
-                    [fieldId]: "",
-                    [fieldName]: "",
-                }));
-            }
+          }
         };
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -537,7 +461,6 @@ const LeadsCreate: React.FC = () => {
                     <Grid container spacing={2}>
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
-
                                 apiEndpoint="api/search-country-by-name"
                                 label="Ülke"
                                 getCRMData={getCRMData}

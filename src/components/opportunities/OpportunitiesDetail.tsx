@@ -1,11 +1,13 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, MenuItem, TextField, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Opportunity } from "../../models/Opportunity";
+import GenericAutocomplete from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -38,7 +40,7 @@ const OpportunitiesDetail: React.FC = () => {
   };
 
   const [loading, setLoading] = useState(Boolean);
-
+  const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
   // var ownerName = localStorage.getItem("username");
@@ -119,13 +121,41 @@ const OpportunitiesDetail: React.FC = () => {
     fetchData();
   }, [id]);
 
-  // const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { name, value } = event.target;
-  //   setOpportunity((prevAccount) => ({
-  //     ...prevAccount,
-  //     [name]: value,
-  //   }));
-  // };
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setOpportunity((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+      } else {
+        // Tekli seçim modunda
+        setOpportunity((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
+        }));
+      }
+    };
+
+  const handleSelectFieldChange2 = (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setOpportunity(prev => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setOpportunity(prev => ({
+          ...prev,
+          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+        }));
+      }
+    };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -194,6 +224,14 @@ const OpportunitiesDetail: React.FC = () => {
     setActiveStep(0);
   };
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setOpportunity((prevAccount) => ({
+      ...prevAccount,
+      [name]: value,
+    }));
+  };
+
   //If companyType is contact
   const getStepContactContent = (step: number) => {
     switch (step) {
@@ -214,34 +252,49 @@ const OpportunitiesDetail: React.FC = () => {
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/account/name"
                 label="Firma"
-                fullWidth
-                variant="outlined"
-                id="ParentAccountName"
-                name="ParentAccountName"
-                value={opportunity.ParentAccountName}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={opportunity.ParentAccountId ? { Id: opportunity.ParentAccountId, Name: opportunity.ParentAccountName } : null}
+                onValueChange={handleSelectFieldChange('ParentAccountId', 'ParentAccountName')}
+                error={!!errors.ParentAccountId} // Hata kontrolü
+                helperText={errors.ParentAccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                disabled={true}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/contact/fullname"
+                label="Firma"
+                getCRMData={getCRMData}
+                selectedValue={opportunity.ParentContactId ? { Id: opportunity.ParentContactId, Name: opportunity.ParentContactName } : null}
+                onValueChange={handleSelectFieldChange('ParentContactId', 'ParentContactName')}
+                error={!!errors.ParentContactId} // Hata kontrolü
+                helperText={errors.ParentContactId ? 'Bu alan zorunludur' : ''} // Hata mesajı
               />
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
-                label="İlgili Kişi"
+                select
+                label="Satış Türü"
                 fullWidth
                 variant="outlined"
-                id="ParentContactName"
-                name="ParentContactName"
-                value={opportunity.ParentContactName}
-                // onChange={handleInputChange}
+                id="SalesTypeCode"
+                name="SalesTypeCode"
+                value={Number(opportunity.SalesTypeCode)}
+                onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,
                 }}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={0}>Müşteri</MenuItem>
+                <MenuItem value={1}>Üye</MenuItem>
+
+              </TextField>
             </Grid>
-            <Grid item {...gridItemSize}>
+            {/* <Grid item {...gridItemSize}>
               <TextField
                 label="Satış Türü"
                 fullWidth
@@ -254,7 +307,7 @@ const OpportunitiesDetail: React.FC = () => {
                   readOnly: true,
                 }}
               />
-            </Grid>
+            </Grid> */}
 
             <Grid item {...gridItemSize}>
               <TextField
