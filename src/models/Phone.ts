@@ -1,18 +1,11 @@
-export interface LookupValueModel {
-  Id: string;
-  Name: string;
-}
+import { LookupValueModel } from "./shared/LookupValueModel";
 
-export interface OptionSetValueModel {
-  Value: number;
-  Label: string;
-}
 
 export interface Phone {
   PhoneId: string;
   Subject: string;
-  From: LookupValueModel;
-  To: LookupValueModel;
+  From: LookupValueModel[];
+  To: LookupValueModel[];
   RegardingObjectId: LookupValueModel;
   PhoneNumber: string;
   DirectionCode: boolean;

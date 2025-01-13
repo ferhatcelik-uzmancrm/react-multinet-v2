@@ -1,7 +1,4 @@
-export interface LookupValueModel {
-  Id: string;
-  Name: string;
-}
+import { LookupValueModel } from "./shared/LookupValueModel";
 
 export interface OptionSetValueModel {
   Value: number;
@@ -11,6 +8,7 @@ export interface OptionSetValueModel {
 export interface Email {
   EmailId: string;
   Subject: string;
+  Message: string;
   From: LookupValueModel;
   To: LookupValueModel[]; // Array for multiple recipients
   Cc: LookupValueModel[]; // Array for CC recipients

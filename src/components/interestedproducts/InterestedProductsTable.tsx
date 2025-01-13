@@ -13,8 +13,6 @@ import Link from "@mui/joy/Link";
 import Modal from "@mui/joy/Modal";
 import ModalClose from "@mui/joy/ModalClose";
 import ModalDialog from "@mui/joy/ModalDialog";
-import Option from "@mui/joy/Option";
-import Select from "@mui/joy/Select";
 import Sheet from "@mui/joy/Sheet";
 import Table from "@mui/joy/Table";
 import Typography from "@mui/joy/Typography";
@@ -27,6 +25,7 @@ import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { fakeCompanyData } from "../../fake/fakeCompanyData";
 import { handleExport } from "../../helper/Export";
+import Pagination from "../../helper/Pagination";
 import { InterestedProduct, InterestedProductRequest } from "../../models/InterestedProduct";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
 
@@ -75,47 +74,21 @@ function stableSort<T>(
 export default function InterestedProductsTable() {
 
     const { selectedBrand, updateIsAccount } = useAppContext()  //Get selected brand
-
     const navigate = useNavigate();
-
-    const handleArchiveClick = (companyId: string, companyType: string) => {
-        if (companyType === 'Account')
-            updateIsAccount(true);
-        else
-            updateIsAccount(false);
-        // const matchedData = rows.filter(row => row.id === companyId);
-        navigate(`/interestedproducts/detail/${companyId}`);
-        /*, { state: { data: matchedData } });*/
-    };
-
-    const createClick = () => {
-        navigate(`/interestedproducts/create/`);
-    };
-
     const [order, setOrder] = useState<Order>("desc");
     const [selected, setSelected] = useState<readonly string[]>([]);
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [interestedproducts, setInterestedproducts] = useState<InterestedProduct[] | null>([]);
-    const [loading, setLoading] = useState(false)
-
-    // const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [paginatedData, setPaginatedData] = useState<InterestedProduct[] | null>([]);
-    const itemsPerPage = 10;
-
+    const [itemsPerPage] = useState<number>(10);
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-
-
-    const handleSearchInputChange = (
-        event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        setSearchQuery(event.target.value);
-        console.log(searchQuery);
-    };
+    const totalPages = interestedproducts ? Math.ceil(interestedproducts.length / itemsPerPage) : 0;
 
     const interestedProductRequest = useMemo(() => ({
         UserId: localStorage.getItem("userid")?.toString() || "",
@@ -123,6 +96,18 @@ export default function InterestedProductsTable() {
         UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
         Name: ""
     }), []);
+
+    const handleArchiveClick = (companyId: string, companyType: string) => {
+        if (companyType === 'Account')
+            updateIsAccount(true);
+        else
+            updateIsAccount(false);
+        navigate(`/interestedproducts/detail/${companyId}`);
+    };
+
+    const createClick = () => {
+        navigate(`/interestedproducts/create/`);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -141,10 +126,7 @@ export default function InterestedProductsTable() {
         const startIndex = (currentPage - 1) * itemsPerPage;
         const currentData = interestedproducts?.slice(startIndex, startIndex + itemsPerPage) || [];
         setPaginatedData(currentData);
-    }, [currentPage, interestedproducts]);
-
-    const totalPages = interestedproducts ? Math.ceil(interestedproducts.length / itemsPerPage) : 0;
-    console.log("Total Pages: ", totalPages)
+    }, [currentPage, interestedproducts, itemsPerPage]);
 
     const handleApiSearch = async () => {
         try {
@@ -171,53 +153,22 @@ export default function InterestedProductsTable() {
         }
     };
 
-    const renderPagination = () => {
-        let pageNumbers: (number | string)[] = [];
-
-        //Eğer toplam sayfa sayısı 10'dan fazla ise özel mantık
-        if (totalPages > 10) {
-            // İlk 5 sayfa
-            for (let i = 1; i <= 9; i++) {
-                pageNumbers.push(i);
-            }
-
-            // Eğer şu anki sayfa ilk 5 sayfa sonrasında ise, 5. sayfadan sonra 3 tane daha sayfa göster
-            if (currentPage >= 9 && currentPage < totalPages - 1) {
-
-                for (let i = currentPage + 1; i <= currentPage + 9; i++) {
-                    if (i > 0 && i <= totalPages) {
-                        pageNumbers.push(i);
-
-                    }
-
-                }
-                pageNumbers = pageNumbers.slice(8);
-                // pageNumbers.push('...');
-            }
-
-            // Son sayfa
-            for (let i = totalPages; i <= totalPages; i++) {
-                pageNumbers.push('...');
-                pageNumbers.push(i);
-            }
-        } else {
-            // Eğer toplam sayfa sayısı 10'dan azsa tüm sayfaları göster
-            for (let i = 1; i <= totalPages; i++) {
-                pageNumbers.push(i);
-            }
-        }
-
-        return pageNumbers;
+    const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(event.target.value);
+        setCurrentPage(1);
     };
 
-    const filteredRows = paginatedData !== null && Array.isArray(paginatedData)
-        ? paginatedData.filter((row) =>
+    const filteredRows = interestedproducts !== null && Array.isArray(interestedproducts)
+        ? interestedproducts.filter((row) =>
             (row.InterestedProductId?.toString().includes(searchQuery)) ||
             row.LeadId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             row.AccountId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            row.OpportunityId?.Name?.toLowerCase().includes(searchQuery.toLowerCase()) 
-            // row.QuoteApprovalStatus?.toLowerCase().includes(searchQuery.toLowerCase())
-        ) : [];
+            row.OpportunityId?.Name?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : [];
+
+    // 2. Arama sonuçlarını sayfalara böl
+    const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const renderFilters = () => (
         <React.Fragment>
@@ -453,8 +404,8 @@ export default function InterestedProductsTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedData !== null && Array.isArray(paginatedData) ? (
-                            stableSort(filteredRows, getComparator(order, "InterestedProductId")).map((row) => (
+                        {paginatedRows !== null && Array.isArray(paginatedRows) ? (
+                            stableSort(paginatedRows, getComparator(order, "InterestedProductId")).map((row) => (
                                 <tr key={row.InterestedProductId}>
                                     <td style={{ textAlign: "center" }}>
                                         <Checkbox
@@ -508,96 +459,12 @@ export default function InterestedProductsTable() {
                     </tbody>
                 </Table>
             </Sheet>
-            <Box
-                className="Pagination-mobile"
-                sx={{ display: { xs: "flex", md: "none" }, alignItems: "center" }}
-            >
-                <IconButton
-                    aria-label="previous page"
-                    variant="outlined"
-                    color="neutral"
-                    size="sm"
-                >
-                    <i data-feather="arrow-left" />
-                </IconButton>
-                <Typography level="body-sm" mx="auto">
-                    Page 1 of 10
-                </Typography>
-                <IconButton
-                    aria-label="next page"
-                    variant="outlined"
-                    color="neutral"
-                    size="sm"
-                >
-                    <i data-feather="arrow-right" />
-                </IconButton>
-            </Box>
-            <Box
-                className="Pagination-laptopUp"
-                sx={{
-                    pt: 4,
-                    gap: 1,
-                    [`& .MuiIconButton-root`]: { borderRadius: "50%" },
-                    display: {
-                        xs: "none",
-                        md: "flex",
-                    },
-                }}
-            >
-                <Button
-                    size="sm"
-                    variant="plain"
-                    color="neutral"
-                    startDecorator={<i data-feather="arrow-left" />}
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                >
-                    Önceki
-                </Button>
-
-                <Box sx={{ flex: 1 }} />
-                {renderPagination().map((page, index) => (
-                    <IconButton
-                        key={index}
-                        size="sm"
-                        variant={page === currentPage ? "outlined" : "plain"}
-                        color="neutral"
-                        onClick={() => {
-                            // "..." butonlarına tıklanamaz
-                            if (page !== '...') {
-                                setCurrentPage(Number(page));
-                            }
-                        }}
-                    >
-                        {page === '...' ? '...' : page}
-                    </IconButton>
-                ))}
-                {/* {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <IconButton
-                        key={page}
-                        size="sm"
-                        variant={page === currentPage ? "outlined" : "plain"}
-                        color="neutral"
-                        onClick={() => setCurrentPage(page)}
-                    >
-                        {page}
-                    </IconButton>
-                ))} */}
-                <Box sx={{ flex: 1 }} />
-
-                <Button
-                    size="sm"
-                    variant="plain"
-                    color="neutral"
-                    endDecorator={<i data-feather="arrow-right" />}
-                    onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                >
-                    Sonraki
-                </Button>
-            </Box>
+            {/* Sayfalama */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
         </React.Fragment>
     );
 }

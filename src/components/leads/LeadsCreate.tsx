@@ -5,9 +5,9 @@ import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import GenericAutocomplete from "../../helper/Lookup";
+import {GenericAutocomplete} from "../../helper/Lookup";
 import { Lead } from "../../models/Lead";
-import { LookupOptionType } from "../../models/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -331,7 +331,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/get-source"
                                 label="Müşteri Aday Kaynağı"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource } : null}
+                                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange('LeadSourceCode', 'LeadSource')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.LeadSource} // Hata kontrolü
@@ -394,7 +394,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-contacttitle-by-name"
                                 label="Yetkili Unvanı"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName } : null}
+                                selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange('JobTitleId', 'JobTitleName')}
                             />
                         </Grid>
@@ -464,7 +464,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-country-by-name"
                                 label="Ülke"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName } : null}
+                                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange('CountryId', 'CountryName')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.CountryId} // Hata kontrolü
@@ -476,7 +476,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-city-by-name"
                                 label="İl"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName } : null}
+                                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange('CityId', 'CityName')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.CityId} // Hata kontrolü
@@ -489,7 +489,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-town-by-name"
                                 label="İlçe"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName } : null}
+                                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange('TownId', 'TownName')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.TownId} // Hata kontrolü
@@ -501,7 +501,7 @@ const LeadsCreate: React.FC = () => {
                                 apiEndpoint="api/search-neighbourhood-by-name"
                                 label="Mahalle"
                                 getCRMData={getCRMData}
-                                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood } : null}
+                                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.CityId} // Hata kontrolü

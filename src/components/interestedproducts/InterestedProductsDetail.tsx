@@ -6,8 +6,8 @@ import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { InterestedProduct } from "../../models/InterestedProduct";
-import GenericAutocomplete from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/Lookup";
+import {GenericAutocomplete} from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -78,15 +78,15 @@ const InterestedProductsDetail: React.FC = () => {
     const [interestedProduct, setInterestedProduct] = useState<InterestedProduct>({
         InterestedProductId: "",
         Name: "",
-        LeadId: { Id: "", Name: "" },
-        AccountId: { Id: "", Name: "" },
-        OpportunityId: { Id: "", Name: "" },
-        ContractId: { Id: "", Name: "" },
-        QuoteId: { Id: "", Name: "" },
+        LeadId: { Id: "", Name: "", LogicalName:"" },
+        AccountId: { Id: "", Name: "", LogicalName:"" },
+        OpportunityId: { Id: "", Name: "", LogicalName:"" },
+        ContractId: { Id: "", Name: "", LogicalName:"" },
+        QuoteId: { Id: "", Name: "", LogicalName:"" },
         IsCustomerOrMember: false,
-        ProductGroupId: { Id: "", Name: "" },
-        MainProductId: { Id: "", Name: "" },
-        ProductId: { Id: "", Name: "" },
+        ProductGroupId: { Id: "", Name: "", LogicalName:"" },
+        MainProductId: { Id: "", Name: "", LogicalName:"" },
+        ProductId: { Id: "", Name: "", LogicalName:"" },
         Description: "",
         SelfOwnedVehicleNumber: 0,
         NumberLeasedCar: 0,
@@ -239,7 +239,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/lead/companyname"
                                 label="Müşteri Adayı"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.LeadId ? { Id: interestedProduct.LeadId.Id, Name: interestedProduct.LeadId.Name } : null}
+                                selectedValue={interestedProduct.LeadId ? { Id: interestedProduct.LeadId.Id, Name: interestedProduct.LeadId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('LeadId')}
                                 disabled={true}
                                 error={!!errors.LeadId} // Hata kontrolü
@@ -251,7 +251,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/account/name"
                                 label="Firma"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.AccountId ? { Id: interestedProduct.AccountId.Id, Name: interestedProduct.AccountId.Name } : null}
+                                selectedValue={interestedProduct.AccountId ? { Id: interestedProduct.AccountId.Id, Name: interestedProduct.AccountId.Name , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange2('AccountId')}
                                 error={!!errors.AccountId} // Hata kontrolü
                                 helperText={errors.AccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -262,7 +262,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/opportunity/name"
                                 label="Fırsat"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.OpportunityId ? { Id: interestedProduct.OpportunityId.Id, Name: interestedProduct.OpportunityId.Name } : null}
+                                selectedValue={interestedProduct.OpportunityId ? { Id: interestedProduct.OpportunityId.Id, Name: interestedProduct.OpportunityId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('OpportunityId')}
                                 error={!!errors.AccountId} // Hata kontrolü
                                 helperText={errors.AccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -273,7 +273,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/quote/name"
                                 label="Teklif"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.QuoteId ? { Id: interestedProduct.QuoteId.Id, Name: interestedProduct.QuoteId.Name } : null}
+                                selectedValue={interestedProduct.QuoteId ? { Id: interestedProduct.QuoteId.Id, Name: interestedProduct.QuoteId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('QuoteId')}
                                 error={!!errors.QuoteId} // Hata kontrolü
                                 helperText={errors.QuoteId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -284,7 +284,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/contract/name"
                                 label="Sözleşme"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ContractId ? { Id: interestedProduct.ContractId.Id, Name: interestedProduct.ContractId.Name } : null}
+                                selectedValue={interestedProduct.ContractId ? { Id: interestedProduct.ContractId.Id, Name: interestedProduct.ContractId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('ContractId')}
                                 error={!!errors.ContractId} // Hata kontrolü
                                 helperText={errors.ContractId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -300,7 +300,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/rms_productgroup/rms_name"
                                 label="Ürün Grubu"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ProductGroupId ? { Id: interestedProduct.ProductGroupId.Id, Name: interestedProduct.ProductGroupId.Name } : null}
+                                selectedValue={interestedProduct.ProductGroupId ? { Id: interestedProduct.ProductGroupId.Id, Name: interestedProduct.ProductGroupId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('ProductGroupId')}
                                 disabled={true}
                                 error={!!errors.ProductGroupId} // Hata kontrolü
@@ -312,7 +312,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/rms_mainproduct/rms_name"
                                 label="Ana Ürün"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.MainProductId ? { Id: interestedProduct.MainProductId.Id, Name: interestedProduct.MainProductId.Name } : null}
+                                selectedValue={interestedProduct.MainProductId ? { Id: interestedProduct.MainProductId.Id, Name: interestedProduct.MainProductId.Name, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange2('MainProductId')}
                                 disabled={true}
                                 error={!!errors.MainProductId} // Hata kontrolü
@@ -324,7 +324,7 @@ const InterestedProductsDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/product/name"
                                 label="Ürün"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ProductId ? { Id: interestedProduct.ProductId.Id, Name: interestedProduct.ProductId.Name } : null}
+                                selectedValue={interestedProduct.ProductId ? { Id: interestedProduct.ProductId.Id, Name: interestedProduct.ProductId.Name , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange2('ProductId')}
                                 error={!!errors.ProductId} // Hata kontrolü
                                 helperText={errors.ProductId ? 'Bu alan zorunludur' : ''} // Hata mesajı

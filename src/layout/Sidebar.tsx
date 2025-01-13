@@ -8,6 +8,7 @@ import {
   ExpandMore,
   GroupAddTwoTone,
   Groups2TwoTone,
+  InventoryTwoTone,
   LocalOfferTwoTone,
   MeetingRoomTwoTone,
   PhoneInTalkTwoTone,
@@ -46,6 +47,7 @@ import Phones from "../components/phones/Phones";
 import { useAuth } from "../contexts/AuthContext";
 import ScrollToTop from "../widgets/ScrollToTop";
 import { Content } from "./Content";
+import QuoteDetails from "../components/quotedetails/QuoteDetails";
 
 const drawerWidth = 240;
 
@@ -308,6 +310,12 @@ const Sidebar = () => {
               path: "/offers",
               icon: <LocalOfferTwoTone />,
               component: Offers,
+            },
+            {
+              text: "Teklif Ürünü",
+              path: "/quotedetails",
+              icon: <InventoryTwoTone   />,
+              component: QuoteDetails,
             },
           ].map((item) => (
             <React.Fragment key={item.text}>

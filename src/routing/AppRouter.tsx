@@ -14,6 +14,7 @@ import Phones from "../components/phones/Phones";
 import Profile from "../components/profile/Profile";
 import { Tasks } from "../components/tasks/Tasks";
 import Auth from "../auth/Auth";
+import QuoteDetails from "../components/quotedetails/QuoteDetails";
 
 const AppRouter = () => {
   return (
@@ -29,6 +30,7 @@ const AppRouter = () => {
       <Route path="/leads/*" element={<Leads />} />
       <Route path="/opportunities/*" element={<Opportunities />} />
       <Route path="/offers/*" element={<Offers />} />
+      <Route path="/quotedetails/*" element={<QuoteDetails />} />
       {/* <Route path="/rentalaggrements/*" element={<RentalAggrements />} /> */}
       <Route path="/contracts/*" element={<Contracts />} />
       <Route path="/interestedproducts/*" element={<InterestedProducts />} />

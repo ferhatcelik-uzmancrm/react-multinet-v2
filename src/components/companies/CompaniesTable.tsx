@@ -30,6 +30,7 @@ import { fakeCompanyData } from "../../fake/fakeCompanyData";
 import { handleExport } from "../../helper/Export";
 import { Company, CompanyRequest } from "../../models/Company";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
+import Pagination from '../../helper/Pagination';
 
 type Order = "asc" | "desc";
 
@@ -95,15 +96,19 @@ export default function CompaniesTable() {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [companies, setCompanies] = useState<Company[] | null>([]);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [paginatedData, setPaginatedData] = useState<Company[] | null>([]);
+  const [itemsPerPage] = useState<number>(10);
+
+  const totalPages = companies ? Math.ceil(companies.length / itemsPerPage) : 0;
 
   const handleSearchInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setSearchQuery(event.target.value);
-    console.log(searchQuery);
   };
 
   const companyRequest = useMemo(() => ({
@@ -125,6 +130,12 @@ export default function CompaniesTable() {
     };
     fetchData();
   }, [companyRequest]);
+
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentData = companies?.slice(startIndex, startIndex + itemsPerPage) || [];
+    setPaginatedData(currentData);
+  }, [currentPage, companies, itemsPerPage]);
 
   const handleApiSearch = async () => {
     try {
@@ -169,35 +180,31 @@ export default function CompaniesTable() {
       row.EmailAddress?.toLowerCase().includes(searchQuery.toLowerCase())
     ) : [];
 
+  // 2. Arama sonuçlarını sayfalara böl
+  const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const renderFilters = () => (
     <React.Fragment>
-      <FormControl size="sm">
-        {/* <FormLabel>Durum</FormLabel>
-        <Select
-          size="md"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
-        >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Kategori</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Müşteri</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl> 
+      <FormControl sx={{ flex: 0 }} size="md">
+          <FormLabel>Firma oluştur</FormLabel>
+          <MaterialButton
+            variant="contained"
+            sx={{
+              border: "none",
+              textTransform: "capitalize",
+              color: "white",
+              backgroundColor: "#211d3c",
+              fontSize: "16px",
+              "&:hover": {
+                backgroundColor: "#f7a724",
+              },
+            }}
+            disabled={loading}
+            onClick={createClick}
+          >
+            Yeni Firma
+          </MaterialButton>
+        </FormControl>
     </React.Fragment>
   );
 
@@ -247,15 +254,9 @@ export default function CompaniesTable() {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
             <ModalClose />
-            <Typography id="filter-modal" level="h2">
-              Filters
-            </Typography>
             <Divider sx={{ my: 2 }} />
             <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {renderFilters()}
-              <Button color="primary" onClick={() => setOpen(false)}>
-                Submit
-              </Button>
             </Sheet>
           </ModalDialog>
         </Modal>
@@ -319,27 +320,6 @@ export default function CompaniesTable() {
         </FormControl>
 
         {renderFilters()}
-
-        <FormControl sx={{ flex: 0 }} size="sm">
-          <FormLabel>Firma oluştur</FormLabel>
-          <MaterialButton
-            variant="contained"
-            sx={{
-              border: "none",
-              textTransform: "capitalize",
-              color: "white",
-              backgroundColor: "#211d3c",
-              fontSize: "16px",
-              "&:hover": {
-                backgroundColor: "#f7a724",
-              },
-            }}
-            disabled={loading}
-            onClick={createClick}
-          >
-            Yeni Firma
-          </MaterialButton>
-        </FormControl>
       </Box>
       <Sheet
         className="OrderTableContainer"
@@ -433,8 +413,8 @@ export default function CompaniesTable() {
             </tr>
           </thead>
           <tbody>
-            {companies !== null && Array.isArray(companies) ? (
-              stableSort(filteredRows, getComparator(order, "CompanyId")).map((row) => (
+            {paginatedRows !== null && Array.isArray(paginatedRows) ? (
+              stableSort(paginatedRows, getComparator(order, "CompanyId")).map((row) => (
                 <tr key={row.CompanyId}>
                   <td style={{ textAlign: "center" }}>
                     <Checkbox
@@ -508,73 +488,12 @@ export default function CompaniesTable() {
           </tbody>
         </Table>
       </Sheet>
-      <Box
-        className="Pagination-mobile"
-        sx={{ display: { xs: "flex", md: "none" }, alignItems: "center" }}
-      >
-        <IconButton
-          aria-label="previous page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-left" />
-        </IconButton>
-        <Typography level="body-sm" mx="auto">
-          Page 1 of 10
-        </Typography>
-        <IconButton
-          aria-label="next page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-right" />
-        </IconButton>
-      </Box>
-      <Box
-        className="Pagination-laptopUp"
-        sx={{
-          pt: 4,
-          gap: 1,
-          [`& .${iconButtonClasses.root}`]: { borderRadius: "50%" },
-          display: {
-            xs: "none",
-            md: "flex",
-          },
-        }}
-      >
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          startDecorator={<i data-feather="arrow-left" />}
-        >
-          Önceki
-        </Button>
-
-        <Box sx={{ flex: 1 }} />
-        {["1", "2", "3", "…", "8", "9", "10"].map((page) => (
-          <IconButton
-            key={page}
-            size="sm"
-            variant={Number(page) ? "outlined" : "plain"}
-            color="neutral"
-          >
-            {page}
-          </IconButton>
-        ))}
-        <Box sx={{ flex: 1 }} />
-
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          endDecorator={<i data-feather="arrow-right" />}
-        >
-          Sonraki
-        </Button>
-      </Box>
+      {/* Sayfalama */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </React.Fragment>
   );
 }

@@ -8,6 +8,8 @@ import { Appointment } from "../../models/Appointment";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { GenericAutocomplete } from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 
 const gridItemSize = {
   xs: 12,
@@ -31,8 +33,7 @@ const AppointmentsDetail: React.FC = () => {
   const { id } = useParams();
   const location = useLocation();
   const stateData = location.state?.data || [];
-  console.log(stateData);
-
+  const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
   const [loading, setLoading] = useState(Boolean);
@@ -80,20 +81,24 @@ const AppointmentsDetail: React.FC = () => {
     Subject: "",
     ActivityTypeId: {
       Id: "",
-      Name: ""
+      Name: "",
+      LogicalName: ""
     },
     RegardingObjectId: {
       Id: "",
-      Name: ""
+      Name: "",
+      LogicalName: ""
     },
     ActivityReasonId: {
       Id: "",
-      Name: ""
+      Name: "",
+      LogicalName: ""
     },
     IsOnlineMeeting: false,
     ActivityStateId: {
       Id: "",
-      Name: ""
+      Name: "",
+      LogicalName: ""
     },
     IsPlannedActivity: {
       Value: 0,
@@ -122,7 +127,8 @@ const AppointmentsDetail: React.FC = () => {
     IsMultiTravelAccommodation: false,
     OwnerId: {
       Id: "",
-      Name: ""
+      Name: "",
+      LogicalName: ""
     },
     CreatedOn: new Date(),
     ModifiedOn: new Date()
@@ -151,24 +157,9 @@ const AppointmentsDetail: React.FC = () => {
     }));
   };
 
-  // const handleCompanyChange = (
-  //   event: React.SyntheticEvent,
-  //   value: any[],
-  //   reason: AutocompleteChangeReason,
-  //   details?: AutocompleteChangeDetails<any>
-  // ) => {
-  //   const jsonString = JSON.stringify(value);
-  //   console.log(value);
-  //   console.log(jsonString);
-  //   setAppointment((prevAppointment) => ({
-  //     ...prevAppointment,
-  //     company: value,
-  //   }));
-  // };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // alert(JSON.stringify(lead))
     setLoading(true)
 
     try {
@@ -270,14 +261,41 @@ const AppointmentsDetail: React.FC = () => {
     });
   }
 
-  // const switchStyles = {
-  //   '& .MuiSwitch-switchBase.Mui-checked': {
-  //     color: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.Avis,
-  //   },
-  //   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-  //     backgroundColor: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.Avis,
-  //   },
-  // };
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setAppointment((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+      } else {
+        // Tekli seçim modunda
+        setAppointment((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
+        }));
+      }
+    };
+
+  const handleSelectFieldChange2 = (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setAppointment(prev => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setAppointment(prev => ({
+          ...prev,
+          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+        }));
+      }
+    };
 
   const getStepContent = (step: number) => {
     switch (step) {
@@ -325,6 +343,9 @@ const AppointmentsDetail: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
+                InputLabelProps={{
+                  shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
+                }}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -367,6 +388,9 @@ const AppointmentsDetail: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
+                InputLabelProps={{
+                  shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
+                }}
               />
             </Grid>
             <Grid item {...gridItemSize} sx={{ display: "none" }}>
@@ -388,10 +412,21 @@ const AppointmentsDetail: React.FC = () => {
                 name="Subject"
                 value={appointment.Subject}
                 onChange={handleInputChange}
+                required
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/contact/fullname"
+                label="İlgili"
+                getCRMData={getCRMData}
+                selectedValue={appointment.RegardingObjectId ? { Id: appointment.RegardingObjectId.Id, Name: appointment.RegardingObjectId.Name, LogicalName: appointment.RegardingObjectId.LogicalName } : null}
+                onValueChange={handleSelectFieldChange2('RegardingObjectId')}
+                error={!!errors.RegardingObjectId} // Hata kontrolü
+                helperText={errors.RegardingObjectId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
+              />
+              {/* <TextField
                 label="İlgi"
                 fullWidth
                 variant="outlined"
@@ -399,10 +434,20 @@ const AppointmentsDetail: React.FC = () => {
                 name="RegardingObjectId"
                 value={appointment.RegardingObjectId?.Name}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/new_activitytype/new_name"
+                label="Aktivite Türü"
+                getCRMData={getCRMData}
+                selectedValue={appointment.ActivityTypeId ? { Id: appointment.ActivityTypeId.Id, Name: appointment.ActivityTypeId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('ActivityTypeId')}
+                error={!!errors.ActivityTypeId} // Hata kontrolü
+                helperText={errors.ActivityTypeId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
+              />
+              {/* <TextField
                 label="Aktivite Türü"
                 fullWidth
                 variant="outlined"
@@ -410,10 +455,20 @@ const AppointmentsDetail: React.FC = () => {
                 name="ActivityTypeId"
                 value={appointment.ActivityTypeId?.Name}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+            <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/new_activityreason/new_name"
+                label="Ziyaret Sebepleri"
+                getCRMData={getCRMData}
+                selectedValue={appointment.ActivityReasonId ? { Id: appointment.ActivityReasonId.Id, Name: appointment.ActivityReasonId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('ActivityReasonId')}
+                error={!!errors.ActivityReasonId} // Hata kontrolü
+                helperText={errors.ActivityReasonId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
+              />
+              {/* <TextField
                 label="Ziyaret Sebepleri"
                 fullWidth
                 variant="outlined"
@@ -421,7 +476,7 @@ const AppointmentsDetail: React.FC = () => {
                 name="ActivityReasonId"
                 value={appointment.ActivityReasonId?.Name}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
@@ -434,34 +489,6 @@ const AppointmentsDetail: React.FC = () => {
                 onChange={handleInputChange}
               />
             </Grid>
-            {/* <Grid item {...gridItemSize}>
-              <Autocomplete
-                multiple
-                id="company"
-                className="company"
-                fullWidth
-                options={appointment.RegardingObjectId?.Name}
-                getOptionLabel={(option) => option.name}
-                value={appointment.RegardingObjectId?.Id}
-                onChange={handleCompanyChange}
-                // renderOption={(props, option, { selected }) => (
-                //   <li {...props} style={{ fontWeight: selected ? 'bold' : 'normal' }}>
-                //     {option.name}
-                //   </li>
-                // )}
-                renderInput={(params) => (
-                  <TextField {...params} label="Firma" />
-                )}
-                limitTags={1}
-                readOnly
-                sx={{
-                  '& .MuiAutocomplete-tag': {
-                    fontWeight: 'bold',
-                    color: 'GrayText'
-                  },
-                }}
-              />
-            </Grid> */}
           </Grid >
         );
       case 1:
@@ -506,7 +533,7 @@ const AppointmentsDetail: React.FC = () => {
                 type="datetime-local"
                 fullWidth
                 variant="outlined"
-                name="startDate"
+                name="ScheduledStart"
                 value={appointment.ScheduledStart}
                 onChange={handleInputChange}
                 InputLabelProps={{
@@ -523,7 +550,7 @@ const AppointmentsDetail: React.FC = () => {
                 type="datetime-local"
                 fullWidth
                 variant="outlined"
-                name="endDate"
+                name="ScheduledEnd"
                 value={appointment.ScheduledEnd}
                 onChange={handleInputChange}
                 InputLabelProps={{

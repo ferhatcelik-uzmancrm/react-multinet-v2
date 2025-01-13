@@ -86,20 +86,24 @@ const AppointmentsCreate: React.FC = () => {
         Subject: "",
         ActivityTypeId: {
             Id: "",
-            Name: ""
+            Name: "",
+            LogicalName: ""
         },
         RegardingObjectId: {
             Id: "",
-            Name: ""
+            Name: "",
+            LogicalName: ""
         },
         ActivityReasonId: {
             Id: "",
-            Name: ""
+            Name: "",
+            LogicalName: ""
         },
         IsOnlineMeeting: false,
         ActivityStateId: {
             Id: "",
-            Name: ""
+            Name: "",
+            LogicalName: ""
         },
         IsPlannedActivity: {
             Value: 0,
@@ -128,7 +132,8 @@ const AppointmentsCreate: React.FC = () => {
         IsMultiTravelAccommodation: false,
         OwnerId: {
             Id: "",
-            Name: ""
+            Name: "",
+            LogicalName: ""
         },
         CreatedOn: new Date(),
         ModifiedOn: new Date()

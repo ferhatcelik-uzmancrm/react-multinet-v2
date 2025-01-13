@@ -6,8 +6,8 @@ import { useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Lead } from "../../models/Lead";
-import GenericAutocomplete from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/Lookup";
+import {GenericAutocomplete} from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -136,67 +136,6 @@ const LeadsDetail: React.FC = () => {
     }));
   };
   
-  const handleCountryChange = (selectedOption: LookupOptionType | null) => {
-    if (selectedOption) {
-      setLead(prevLead => ({
-        ...prevLead,
-        CountryId: selectedOption.Id,
-        CountryName: selectedOption.Name
-      }));
-      // setCityApiEndpoint(`api/search-city-by-name?countryId=${selectedOption.Id}`);
-    } else {
-      setLead(prevLead => ({
-        ...prevLead,
-        CountryId: "",
-        CountryName: "",
-      }));
-    }
-  };
-  const handleCityChange = (selectedOption: LookupOptionType | null) => {
-    if (selectedOption) {
-      setLead(prevLead => ({
-        ...prevLead,
-        CityId: selectedOption.Id,
-        CityName: selectedOption.Name
-      }));
-    } else {
-      setLead(prevLead => ({
-        ...prevLead,
-        CityId: "",
-        CityName: "",
-      }));
-    }
-  };
-  const handleJobTitleChange = (selectedOption: LookupOptionType | null) => {
-    if (selectedOption) {
-      setLead(prevLead => ({
-        ...prevLead,
-        JobTitleId: selectedOption.Id,
-        JobTitleName: selectedOption.Name
-      }));
-    } else {
-      setLead(prevLead => ({
-        ...prevLead,
-        JobTitleId: "",
-        JobTitleName: "",
-      }));
-    }
-  };
-  const handleTownChange = (selectedOption: LookupOptionType | null) => {
-    if (selectedOption) {
-      setLead(prevLead => ({
-        ...prevLead,
-        TownId: selectedOption.Id,
-        TownName: selectedOption.Name
-      }));
-    } else {
-      setLead(prevLead => ({
-        ...prevLead,
-        TownId: "",
-        TownName: "",
-      }));
-    }
-  };
   const handleSelectFieldChange = (idField: string, nameField: string) => 
     (value: LookupOptionType | LookupOptionType[] | null) => {
       if (Array.isArray(value)) {
@@ -347,7 +286,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/get-source"
                 label="Müşteri Aday Kaynağı"
                 getCRMData={getCRMData}
-                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource } : null}
+                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource, LogicalName:"" } : null}
                 onValueChange={handleSelectFieldChange('LeadSourceCode', 'LeadSource')}
               />
             </Grid>
@@ -387,7 +326,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-contacttitle-by-name"
                 label="Yetkili Unvanı"
                 getCRMData={getCRMData}
-                selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName } : null}
+                selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName , LogicalName:""} : null}
                 onValueChange={handleSelectFieldChange('JobTitleId', 'JobTitleName')}
               />
             </Grid>
@@ -504,7 +443,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-country-by-name"
                 label="Ülke"
                 getCRMData={getCRMData}
-                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName } : null}
+                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName , LogicalName:""} : null}
                 onValueChange={handleSelectFieldChange('CountryId', 'CountryName')}
               />
             </Grid>
@@ -513,7 +452,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-city-by-name"
                 label="İl"
                 getCRMData={getCRMData}
-                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName } : null}
+                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName, LogicalName:"" } : null}
                 onValueChange={handleSelectFieldChange('CityId', 'CityName')}
               />
             </Grid>
@@ -523,7 +462,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-town-by-name"
                 label="İlçe"
                 getCRMData={getCRMData}
-                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName } : null}
+                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName, LogicalName:"" } : null}
                 onValueChange={handleSelectFieldChange('TownId', 'TownName')}
               />
             </Grid>
@@ -532,7 +471,7 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-neighbourhood-by-name"
                 label="Mahalle"
                 getCRMData={getCRMData}
-                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood } : null}
+                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood, LogicalName:"" } : null}
                 onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
               />
             </Grid>

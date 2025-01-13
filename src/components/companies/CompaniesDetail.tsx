@@ -8,8 +8,8 @@ import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Company } from "../../models/Company";
 import { getCRMData } from "../../requests/ApiCall";
 import { CompaniesSubDetail } from "./CompaniesSubDetail";
-import GenericAutocomplete from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/Lookup";
+import {GenericAutocomplete} from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 
 const gridItemSize = {
     xs: 12,
@@ -365,7 +365,7 @@ const CompaniesDetail: React.FC = () => {
                                 apiEndpoint="api/search-companytype-by-name"
                                 label="Şirket Tipi"
                                 getCRMData={getCRMData}
-                                selectedValue={account.CompanyTypeId ? { Id: account.CompanyTypeId, Name: account.CompanyTypeName } : null}
+                                selectedValue={account.CompanyTypeId ? { Id: account.CompanyTypeId, Name: account.CompanyTypeName, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange('CompanyTypeId', 'CompanyTypeName')}
                             />
                         </Grid>
@@ -434,7 +434,7 @@ const CompaniesDetail: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/rms_groupaccount/rms_name"
                                 label="Grup Firma"
                                 getCRMData={getCRMData}
-                                selectedValue={account.GroupAccountId ? { Id: account.GroupAccountId, Name: account.GroupAccountName } : null}
+                                selectedValue={account.GroupAccountId ? { Id: account.GroupAccountId, Name: account.GroupAccountName, LogicalName:"" } : null}
                                 onValueChange={handleSelectFieldChange('GroupAccountId', 'GroupAccountName')}
                             />
                         </Grid>

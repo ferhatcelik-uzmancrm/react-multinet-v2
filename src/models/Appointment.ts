@@ -1,12 +1,8 @@
-export interface LookupValueModel {
-  Id: string;
-  Name: string;
-}
+import { OptionSetValueModel } from "./shared/OptionSetValueModel";
+import { LookupValueModel } from "./shared/LookupValueModel";
 
-export interface OptionSetValueModel {
-  Value: number;
-  Label: string;
-}
+
+
 
 export interface Appointment {
   AppointmentId: string;

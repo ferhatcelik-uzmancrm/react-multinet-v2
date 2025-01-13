@@ -2,7 +2,6 @@
 import { BrowserUpdatedTwoTone, EditNoteTwoTone, TravelExploreTwoTone } from '@mui/icons-material/';
 import { CircularProgress } from "@mui/joy";
 import Box from "@mui/joy/Box";
-import Button from "@mui/joy/Button";
 import Checkbox from "@mui/joy/Checkbox";
 import Divider from "@mui/joy/Divider";
 import FormControl from "@mui/joy/FormControl";
@@ -13,27 +12,22 @@ import Link from "@mui/joy/Link";
 import Modal from "@mui/joy/Modal";
 import ModalClose from "@mui/joy/ModalClose";
 import ModalDialog from "@mui/joy/ModalDialog";
-import Option from "@mui/joy/Option";
-import Select from "@mui/joy/Select";
 import Sheet from "@mui/joy/Sheet";
 import Table from "@mui/joy/Table";
-import Typography from "@mui/joy/Typography";
 import { useMediaQuery, useTheme } from "@mui/material";
 import MaterialButton from "@mui/material/Button";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { fakeCompanyData } from "../../fake/fakeCompanyData";
 import { handleExport } from "../../helper/Export";
-import { Offer, OfferRequest } from "../../models/Offers";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
+import { QuoteDetail, QuoteDetailRequest } from '../../models/QuoteDetail';
 import Pagination from '../../helper/Pagination';
 
 type Order = "asc" | "desc";
-
-const rows = fakeCompanyData
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     if (b[orderBy] < a[orderBy]) {
@@ -72,7 +66,7 @@ function stableSort<T>(
     return stabilizedThis.map((el) => el[0]);
 }
 
-export default function OffersTable() {
+export default function QuoteDetailsTable() {
 
     const { selectedBrand, updateIsAccount } = useAppContext()  //Get selected brand
 
@@ -84,35 +78,35 @@ export default function OffersTable() {
         else
             updateIsAccount(false);
         // const matchedData = rows.filter(row => row.id === companyId);
-        navigate(`/offers/detail/${companyId}`);
+        navigate(`/quotedetails/detail/${companyId}`);
         /*, { state: { data: matchedData } });*/
     };
     const createClick = () => {
-        navigate(`/offers/create/`);
+        navigate(`/quotedetails/create/`);
     };
 
     const [order, setOrder] = useState<Order>("desc");
     const [selected, setSelected] = useState<readonly string[]>([]);
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [offers, setOffers] = useState<Offer[] | null>([]);
+    const [quotedetails, setQuoteDetails] = useState<QuoteDetail[] | null>([]);
     const [loading, setLoading] = useState(false)
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [paginatedData, setPaginatedData] = useState<Offer[] | null>([]);
+    const [paginatedData, setPaginatedData] = useState<QuoteDetail[] | null>([]);
     const [itemsPerPage] = useState<number>(10);
-    const totalPages = offers ? Math.ceil(offers.length / itemsPerPage) : 0;
+    const totalPages = quotedetails ? Math.ceil(quotedetails.length / itemsPerPage) : 0;
 
     const handleSearchInputChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
         setSearchQuery(event.target.value);
-        setCurrentPage(1);
+        console.log(searchQuery);
     };
 
-    const offerRequest = React.useMemo(() => ({
+    const quoteDetailRequest = useMemo(() => ({
         UserId: localStorage.getItem("userid")?.toString() || "",
         CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
         UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
@@ -122,41 +116,38 @@ export default function OffersTable() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await getCRMData('api/get-offers', offerRequest);
-                setOffers(response.data);
+                const response = await getCRMData('api/get-quotedetails', quoteDetailRequest);
+                setQuoteDetails(response.data);
             } catch (error) {
                 alert(error);
             }
         };
         fetchData();
-    }, [offerRequest]);
+    }, [quoteDetailRequest]);
 
     useEffect(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        const currentData = offers?.slice(startIndex, startIndex + itemsPerPage) || [];
+        const currentData = quotedetails?.slice(startIndex, startIndex + itemsPerPage) || [];
         setPaginatedData(currentData);
-    }, [currentPage, offers, itemsPerPage]);
+    }, [currentPage, quotedetails, itemsPerPage]);
 
     const handleApiSearch = async () => {
         try {
             setLoading(true)
             if (searchQuery !== null && searchQuery !== "") {
                 console.log("Search query: ", searchQuery);
-                setOffers([]);
+                setQuoteDetails([]);
 
-                // Determine whether the searchQuery is a company name or tax number: if digit use taxnumber otherwise use name
-                // const isTaxNumber = /^\d+$/.test(searchQuery);
-
-                const searchParams: OfferRequest = {
-                    ...offerRequest,
+                const searchParams: QuoteDetailRequest = {
+                    ...quoteDetailRequest,
                     Name: searchQuery
                 };
 
-                const response = await getCRMData('api/search-offers', searchParams);
-                setOffers(response.data);
+                const response = await getCRMData('api/search-leads', searchParams);
+                setQuoteDetails(response.data);
             } else {
-                const response = await fetchUserData('api/get-offers', '');
-                setOffers(response.data);
+                const response = await fetchUserData('api/get-company', '');
+                setQuoteDetails(response.data);
             }
         } catch (error) {
             alert(error);
@@ -166,20 +157,18 @@ export default function OffersTable() {
         }
     };
 
-    const filteredRows = offers !== null && Array.isArray(offers)
-        ? offers.filter((row) =>
-            (row.Name?.toString().includes(searchQuery))
-            // ||
-            // row.QuoteApprovalStatus?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredRows = quotedetails !== null && Array.isArray(quotedetails)
+        ? quotedetails.filter((row) =>
+            (row.Name?.toString().includes(searchQuery)) ||
+            row.ProductId?.Name.toLowerCase().includes(searchQuery.toLowerCase())
         ) : [];
 
-    // 2. Arama sonuçlarını sayfalara böl
-    const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+        const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const renderFilters = () => (
         <React.Fragment>
             <FormControl sx={{ flex: 0 }} size="sm">
-                <FormLabel>Teklif oluştur</FormLabel>
+                <FormLabel>Teklif ürünü oluştur</FormLabel>
                 <MaterialButton
                     variant="contained"
                     sx={{
@@ -195,9 +184,10 @@ export default function OffersTable() {
                     disabled={loading}
                     onClick={createClick}
                 >
-                    Yeni Teklif
+                    Yeni Teklif Ürünü
                 </MaterialButton>
             </FormControl>
+
         </React.Fragment>
     );
 
@@ -247,11 +237,9 @@ export default function OffersTable() {
                 <Modal open={open} onClose={() => setOpen(false)}>
                     <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
                         <ModalClose />
-
-                        <Divider sx={{ my: 3 }} />
+                        <Divider sx={{ my: 2 }} />
                         <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             {renderFilters()}
-
                         </Sheet>
                     </ModalDialog>
                 </Modal>
@@ -276,7 +264,7 @@ export default function OffersTable() {
                 }}
             >
                 <FormControl sx={{ flex: 1 }} size="sm">
-                    <FormLabel>Müşteri adayı ara</FormLabel>
+                    <FormLabel>Teklif ürünü ara</FormLabel>
                     <Input
                         size="md"
                         placeholder="Ara"
@@ -313,10 +301,7 @@ export default function OffersTable() {
                         onChange={handleSearchInputChange}
                     />
                 </FormControl>
-
                 {renderFilters()}
-
-
             </Box>
             <Sheet
                 className="OrderTableContainer"
@@ -367,23 +352,23 @@ export default function OffersTable() {
                             <th style={{ width: 48, textAlign: "center", padding: 12 }}>
                                 <Checkbox
                                     indeterminate={
-                                        selected.length > 0 && selected.length !== rows.length
+                                        selected.length > 0 && selected.length !== paginatedRows.length
                                     }
-                                    checked={selected.length === rows.length}
+                                    checked={selected.length === paginatedRows.length}
                                     onChange={(event) => {
                                         setSelected(
-                                            event.target.checked ? rows.map((row) => row.id) : []
+                                            event.target.checked ? paginatedRows.map((row) => row.QuoteDetailId) : []
                                         );
                                     }}
                                     color={
-                                        selected.length > 0 || selected.length === rows.length
+                                        selected.length > 0 || selected.length === paginatedRows.length
                                             ? "primary"
                                             : undefined
                                     }
                                     sx={{ verticalAlign: "text-bottom" }}
                                 />
                             </th>
-                            <th style={{ width: 220, padding: 12 }}>
+                            {/* <th style={{ width: 250, padding: 12 }}>
                                 <Link
                                     underline="none"
                                     color="neutral"
@@ -399,28 +384,32 @@ export default function OffersTable() {
                                         },
                                     }}
                                 >
-                                    Teklif
+                                    Ad
                                 </Link>
-                            </th>
-                            <th style={{ width: 220, padding: 12 }}>Teklif Türü</th>
-                            <th style={{ width: 220, padding: 12 }}>Müşteri</th>
-                            <th style={{ width: 220, padding: 12 }}>Fırsat</th>
-                            <th style={{ width: 120, padding: 12 }}> </th>
+                            </th> */}
+                            <th style={{ width: 300, padding: 15 }}>Varolan Ürün</th>
+                            <th style={{ width: 250, padding: 15 }}>Ödeme Tipi</th>
+                            <th style={{ width: 140, padding: 15 }}>Vade(Gün)</th>
+                            <th style={{ width: 140, padding: 15 }}>Birim Fiyatı</th>
+                            <th style={{ width: 140, padding: 15 }}>Miktar</th>
+                            <th style={{ width: 140, padding: 15 }}>Oranı</th>
+                            <th style={{ width: 140, padding: 15 }}>Toplam Tutar</th>
+                            <th style={{ width: 140, padding: 15 }}> </th>
                         </tr>
                     </thead>
                     <tbody>
                         {paginatedRows !== null && Array.isArray(paginatedRows) ? (
-                            stableSort(paginatedRows, getComparator(order, "OfferId")).map((row) => (
-                                <tr key={row.OfferId}>
+                            stableSort(paginatedRows, getComparator(order, "QuoteDetailId")).map((row) => (
+                                <tr key={row.QuoteDetailId}>
                                     <td style={{ textAlign: "center" }}>
                                         <Checkbox
-                                            checked={selected.includes(row.OfferId)}
-                                            color={selected.includes(row.OfferId) ? "primary" : undefined}
+                                            checked={selected.includes(row.QuoteDetailId)}
+                                            color={selected.includes(row.QuoteDetailId) ? "primary" : undefined}
                                             onChange={(event) => {
                                                 setSelected((ids) =>
                                                     event.target.checked
-                                                        ? ids.concat(row.OfferId)
-                                                        : ids.filter((itemId) => itemId !== row.OfferId)
+                                                        ? ids.concat(row.QuoteDetailId)
+                                                        : ids.filter((itemId) => itemId !== row.QuoteDetailId)
                                                 );
                                             }}
                                             slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
@@ -428,17 +417,20 @@ export default function OffersTable() {
                                         />
                                     </td>
                                     <td>
-                                        {row.Name}
+                                        {row.ProductId?.Name}
                                     </td>
-                                    <td>{row.QuoteType.Label}</td>
-                                    <td>{row.CustomerId?.Name}</td>
-                                    <td>{row.OpportunityId?.Name}</td>
+                                    <td>{row.SettlementType?.Value}</td>
+                                    <td>{row.OptionDay}</td>
+                                    <td>{row.PricePerUnit}</td>
+                                    <td>{row.Quantity}</td>
+                                    <td>{row.Rate}</td>
+                                    <td>{row.ExtendedAmount}</td>
                                     <td style={{ textAlign: "right" }}>
                                         <Link
                                             fontWeight="lg"
                                             component="button"
                                             color="neutral"
-                                            onClick={() => handleArchiveClick(row.OfferId, row.Name)}
+                                            onClick={() => handleArchiveClick(row.QuoteDetailId, row.Name)}
                                         >
                                             <EditNoteTwoTone sx={{ color: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.AvisDark }} />
                                         </Link>
@@ -457,7 +449,7 @@ export default function OffersTable() {
                         ) : (
                             <tr>
                                 <td colSpan={8} style={{ textAlign: "center" }}>
-                                    {offers === null ? "Loading..." : "No matching contacts found."}
+                                    {quotedetails === null ? "Loading..." : "No matching contacts found."}
                                 </td>
                             </tr>
                         )}

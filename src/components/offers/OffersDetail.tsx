@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, MenuItem, TextField, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
@@ -9,6 +9,9 @@ import { Offer } from "../../models/Offers";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { GenericAutocomplete, OptionSet } from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { OptionSetType } from "../../models/shared/OptionSetValueModel";
 
 const gridItemSize = {
   xs: 12,
@@ -38,7 +41,7 @@ const OffersDetail: React.FC = () => {
   };
 
   const [loading, setLoading] = useState(Boolean);
-
+  const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
   const getByBrand = () => {
@@ -76,22 +79,22 @@ const OffersDetail: React.FC = () => {
   const [offer, setOffer] = useState<Offer>({
     OfferId: "", // Assuming this can be an empty string or you might want to use null
     Name: "", // Empty string for default
-    CustomerId: "", // Empty string for default
+    CustomerId: { Id: "", Name: "", LogicalName: "" }, // Empty string for default
     SalesTypeCode: { Value: 0, Label: "" }, // Default OptionSetValueModel
     Possibility: { Value: 0, Label: "" }, // Default OptionSetValueModel
     ApprovalRoleCode: { Value: 0, Label: "" }, // Default OptionSetValueModel
     IsSeasonal: false, // Default boolean value
-    OpportunityId: "", // Required field, initialized as an empty string
+    OpportunityId: { Id: "", Name: "", LogicalName: "" }, // Required field, initialized as an empty string
     QuoteType: { Value: 0, Label: "" }, // Default OptionSetValueModel
     QuoteEndDate: undefined, // Default to undefined for optional Date field
     QuoteApprovalStatus: { Value: 0, Label: "" }, // Default OptionSetValueModel
     LeadSource: { Value: 0, Label: "" }, // Default OptionSetValueModel
 
     // Product properties
-    InterestProductId: "", // Empty string for default
-    ProductGroupId: "", // Empty string for default
-    PriceLevelId: "", // Empty string for default
-    MainProductId: "", // Empty string for default
+    InterestProductId: { Id: "", Name: "", LogicalName: "" }, // Empty string for default
+    ProductGroupId: { Id: "", Name: "", LogicalName: "" }, // Empty string for default
+    PriceLevelId: { Id: "", Name: "", LogicalName: "" }, // Empty string for default
+    MainProductId: { Id: "", Name: "", LogicalName: "" }, // Empty string for default
     ContractTerm: 0, // Default number value
 
     // Sales Manager Approval properties
@@ -145,6 +148,24 @@ const OffersDetail: React.FC = () => {
     fetchData();
   }, [id]);
 
+  const handleSelectFieldChange2 = (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setOffer(prev => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setOffer(prev => ({
+          ...prev,
+          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+        }));
+      }
+    };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -190,6 +211,39 @@ const OffersDetail: React.FC = () => {
     // window.location.reload();
   };
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setOffer((prevLead) => ({
+      ...prevLead,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: false,
+      }));
+    }
+  };
+
+  const handleSelectOptionFieldChange = (fieldName: string) =>
+    (value: OptionSetType | OptionSetType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Value).join(', ');
+        const selectedNames = value.map(option => option.Label).join(', ');
+        setOffer(prev => ({
+          ...prev,
+          [fieldName]: { Value: selectedIds, Label: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setOffer(prev => ({
+          ...prev,
+          [fieldName]: { Value: value ? value.Value : "", Label: value ? value.Label : "" }
+        }));
+      }
+    };
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
   };
@@ -233,87 +287,97 @@ const OffersDetail: React.FC = () => {
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/get-all-customers"
                 label="Müşteri"
-                fullWidth
-                variant="outlined"
-                id="CustomerId"
-                name="CustomerId"
-                value={offer.CustomerId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.CustomerId ? { Id: offer.CustomerId.Id, Name: offer.CustomerId.Name, LogicalName: offer.CustomerId.LogicalName } : null}
+                onValueChange={handleSelectFieldChange2('CustomerId')}
+                error={!!errors.CustomerId} // Hata kontrolü
+                helperText={errors.CustomerId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                disabled={true}
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/opportunity/name"
                 label="Fırsat"
-                fullWidth
-                variant="outlined"
-                id="OpportunityId"
-                name="OpportunityId"
-                value={offer.OpportunityId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.OpportunityId ? { Id: offer.OpportunityId.Id, Name: offer.OpportunityId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('OpportunityId')}
+                error={!!errors.OpportunityId} // Hata kontrolü
+                helperText={errors.OpportunityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                disabled={true}
               />
             </Grid>
 
             <Grid item {...gridItemSize}>
               <TextField
+                select
                 label="Satış Türü"
                 fullWidth
                 variant="outlined"
                 id="SalesTypeCode"
                 name="SalesTypeCode"
-                value={offer.SalesTypeCode.Label}
-                // onChange={handleInputChange}
+                value={offer.SalesTypeCode.Value}
+                onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,
                 }}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={100000000}>Müşteri Satış</MenuItem>
+                <MenuItem value={100000001}>Üye Satış</MenuItem>
+              </TextField>
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
+                select
                 label="Teklif Türü"
                 fullWidth
                 variant="outlined"
                 id="QuoteType"
                 name="QuoteType"
-                value={offer.QuoteType.Label}
-                // onChange={handleInputChange}
+                value={offer.QuoteType.Value}
+                onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,
                 }}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={100000000}>Yeni Teklif</MenuItem>
+                <MenuItem value={100000002}>Kayıptan Kazanç</MenuItem>
+                <MenuItem value={100000001}>Revize Çalışma Koşulu</MenuItem>
+                <MenuItem value={100000003}>Uzatma</MenuItem>
+              </TextField>
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <OptionSet
+                apiEndpoint="api/search-lookup-by-optionsetname/new_possibility"
                 label="Olasılık"
-                fullWidth
-                variant="outlined"
-                id="Possibility"
-                name="Possibility"
-                value={offer.Possibility.Label}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.Possibility ? { Value: offer.Possibility.Value, Label: offer.Possibility.Label } : null}
+                onValueChange={handleSelectOptionFieldChange('Possibility')}
+                error={!!errors.Possibility} // Hata kontrolü
+                helperText={errors.Possibility ? 'Bu alan zorunludur' : ''} // Hata mesajı
               />
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
+                type="date"
                 label="Teklif Son Geçerlilik Tarihi"
                 fullWidth
                 variant="outlined"
                 id="QuoteEndDate"
                 name="QuoteEndDate"
-                value={offer.QuoteEndDate}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
+                value={
+                  offer.QuoteEndDate
+                    ? new Date(offer.QuoteEndDate).toISOString().split('T')[0]
+                    : '' // Eğer boş bir değer varsa
+                }
+                onChange={handleInputChange}
+                InputLabelProps={{
+                  shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
                 }}
               />
             </Grid>
@@ -347,17 +411,14 @@ const OffersDetail: React.FC = () => {
             </Grid>
 
             <Grid item {...gridItemSize}>
-              <TextField
+              <OptionSet
+                apiEndpoint="api/search-lookup-by-optionsetname/new_source"
                 label="Teklif Kaynağı"
-                fullWidth
-                variant="outlined"
-                id="LeadSource"
-                name="LeadSource"
-                value={offer.LeadSource.Label}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.LeadSource ? { Value: offer.LeadSource.Value, Label: offer.LeadSource.Label } : null}
+                onValueChange={handleSelectOptionFieldChange('LeadSource')}
+                error={!!errors.LeadSource} // Hata kontrolü
+                helperText={errors.LeadSource ? 'Bu alan zorunludur' : ''} // Hata mesajı
               />
             </Grid>
           </Grid>
@@ -366,59 +427,50 @@ const OffersDetail: React.FC = () => {
         return (
           <Grid container spacing={2}>
             <Grid item {...gridItemSize}>
-              <TextField
-                label="İlgilenilen Ürün"
-                fullWidth
-                variant="outlined"
-                id="InterestProductId"
-                name="InterestProductId"
-                value={offer.InterestProductId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/rms_productgroup/rms_name"
                 label="Ürün Grubu"
-                fullWidth
-                variant="outlined"
-                id="ProductGroupId"
-                name="ProductGroupId"
-                value={offer.ProductGroupId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.ProductGroupId ? { Id: offer.ProductGroupId.Id, Name: offer.ProductGroupId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('ProductGroupId')}
+                disabled={true}
+                error={!!errors.ProductGroupId} // Hata kontrolü
+                helperText={errors.ProductGroupId ? 'Bu alan zorunludur' : ''} // Hata mesajı
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
-                label="Fiyat Listesi"
-                fullWidth
-                variant="outlined"
-                id="PriceLevelId"
-                name="PriceLevelId"
-                value={offer.PriceLevelId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/rms_mainproduct/rms_name"
                 label="Ana Ürün"
-                fullWidth
-                variant="outlined"
-                id="MainProductId"
-                name="MainProductId"
-                value={offer.MainProductId}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={offer.MainProductId ? { Id: offer.MainProductId.Id, Name: offer.MainProductId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('MainProductId')}
+                disabled={true}
+                error={!!errors.MainProductId} // Hata kontrolü
+                helperText={errors.MainProductId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/product/name"
+                label="İlgilenilen Ürün"
+                getCRMData={getCRMData}
+                selectedValue={offer.InterestProductId ? { Id: offer.InterestProductId.Id, Name: offer.InterestProductId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('ProductId')}
+                error={!!errors.ProductId} // Hata kontrolü
+                helperText={errors.ProductId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/pricelevel/name"
+                label="Fiyat Listesi"
+                getCRMData={getCRMData}
+                selectedValue={offer.PriceLevelId ? { Id: offer.PriceLevelId.Id, Name: offer.PriceLevelId.Name, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange2('ProductGroupId')}
+                disabled={true}
+                error={!!errors.ProductGroupId} // Hata kontrolü
+                helperText={errors.ProductGroupId ? 'Bu alan zorunludur' : ''} // Hata mesajı
               />
             </Grid>
             <Grid item {...gridItemSize}>

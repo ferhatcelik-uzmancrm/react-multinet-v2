@@ -1,14 +1,17 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper,MenuItem, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Opportunity } from "../../models/Opportunity";
-import { sendRequest } from "../../requests/ApiCall";
+import { GenericAutocomplete, OptionSet } from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { sendRequest, getCRMData } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { OptionSetType } from "../../models/shared/OptionSetValueModel";
 const gridItemSize = {
     xs: 12,
     sm: 12,
@@ -92,11 +95,12 @@ const OpportunitiesCreate: React.FC = () => {
         EstimatedCloseDate: "",
         OpportunityRatingCode: 0,
         OpportunityRatingName: "",
-        LeadSource: 0,
+        LeadSource: { Value: 0, Label: "" },
+        ProductGroup: { Id: "", Name: "" ,LogicalName:""},
         CurrentSituation: "",
         CustomerNeed: "",
         ProposedSolution: "",
-        OwnerId: crmOwner || "",
+        OwnerId: { Id: crmOwner || "", Name: "" ,LogicalName:""},
         CreatedBy: crmOwner || "",
         CreatedOn: "",
         ModifiedOn: "",
@@ -105,10 +109,6 @@ const OpportunitiesCreate: React.FC = () => {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-
-        // const jsonString = JSON.stringify(value);
-        // console.log(value);
-        // console.log(jsonString);
         setOpportunity((prevOpportunity) => ({
             ...prevOpportunity,
             [name]: value,
@@ -124,11 +124,67 @@ const OpportunitiesCreate: React.FC = () => {
         }
     };
 
+    const handleSelectFieldChange = (idField: string, nameField: string) =>
+        (value: LookupOptionType | LookupOptionType[] | null) => {
+            if (Array.isArray(value)) {
+                // Çoklu seçim modunda birden fazla seçili öğe varsa
+                const selectedIds = value.map(option => option.Id).join(', ');
+                const selectedNames = value.map(option => option.Name).join(', ');
+                setOpportunity((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+            } else {
+                // Tekli seçim modunda
+                setOpportunity((prev) => ({
+                    ...prev,
+                    [idField]: value ? value.Id : null,
+                    [nameField]: value ? value.Name : '',
+                }));
+            }
+        };
+
+    const handleSelectFieldChange2 = (fieldName: string) =>
+        (value: LookupOptionType | LookupOptionType[] | null) => {
+            if (Array.isArray(value)) {
+                // Çoklu seçim modunda
+                const selectedIds = value.map(option => option.Id).join(', ');
+                const selectedNames = value.map(option => option.Name).join(', ');
+                setOpportunity(prev => ({
+                    ...prev,
+                    [fieldName]: { Id: selectedIds, Name: selectedNames }
+                }));
+            } else {
+                // Tekli seçim modunda
+                setOpportunity(prev => ({
+                    ...prev,
+                    [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+                }));
+            }
+        };
+        const handleSelectOptionFieldChange = (fieldName: string) =>
+            (value: OptionSetType | OptionSetType[] | null) => {
+                if (Array.isArray(value)) {
+                    // Çoklu seçim modunda
+                    const selectedIds = value.map(option => option.Value).join(', ');
+                    const selectedNames = value.map(option => option.Label).join(', ');
+                    setOpportunity(prev => ({
+                        ...prev,
+                        [fieldName]: { Value: selectedIds, Label: selectedNames }
+                    }));
+                } else {
+                    // Tekli seçim modunda
+                    setOpportunity(prev => ({
+                        ...prev,
+                        [fieldName]: { Value: value ? value.Value : "", Label: value ? value.Label : "" }
+                    }));
+                }
+            };
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const requiredFields = [
-            'Name',
+            'ParentAccountId',
+            'ParentContactId',
+            'LeadSource'
         ];
 
         const newErrors: { [key: string]: boolean } = {};
@@ -232,71 +288,56 @@ const OpportunitiesCreate: React.FC = () => {
                                 variant="outlined"
                                 name="OpportunityId"
                                 value={opportunity.OpportunityId}
-                                onChange={handleInputChange}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Fırsat Adı"
-                                fullWidth
-                                variant="outlined"
-                                id="Name"
-                                name="Name"
-                                value={opportunity.Name}
-                                onChange={handleInputChange}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
+                            <GenericAutocomplete
+                                apiEndpoint="api/search-lookup-by-name/account/name"
                                 label="Firma"
-                                fullWidth
-                                variant="outlined"
-                                id="ParentAccountName"
-                                name="ParentAccountName"
-                                value={opportunity.ParentAccountName}
-                                onChange={handleInputChange}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
+                                getCRMData={getCRMData}
+                                selectedValue={opportunity.ParentAccountId ? { Id: opportunity.ParentAccountId, Name: opportunity.ParentAccountName, LogicalName:"" } : null}
+                                onValueChange={handleSelectFieldChange('ParentAccountId', 'ParentAccountName')}
+                                error={!!errors.ParentAccountId} // Hata kontrolü
+                                helperText={errors.ParentAccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
-                            <TextField
+                            <GenericAutocomplete
+                                apiEndpoint="api/search-lookup-by-name/contact/fullname"
                                 label="İlgili Kişi"
-                                fullWidth
-                                variant="outlined"
-                                id="ParentContactName"
-                                name="ParentContactName"
-                                value={opportunity.ParentContactName}
-                                onChange={handleInputChange}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
+                                getCRMData={getCRMData}
+                                selectedValue={opportunity.ParentContactId ? { Id: opportunity.ParentContactId, Name: opportunity.ParentContactName, LogicalName:"" } : null}
+                                onValueChange={handleSelectFieldChange('ParentContactId', 'ParentContactName')}
+                                error={!!errors.ParentContactId} // Hata kontrolü
+                                helperText={errors.ParentContactId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
+                                select
                                 label="Satış Türü"
                                 fullWidth
                                 variant="outlined"
                                 id="SalesTypeCode"
                                 name="SalesTypeCode"
-                                value={opportunity.SalesTypeCode}
+                                value={Number(opportunity.SalesTypeCode)}
                                 onChange={handleInputChange}
-                            // InputProps={{
-                            //     readOnly: true,
-                            // }}
-                            />
+                            >
+                                <MenuItem value="">---</MenuItem>
+                                <MenuItem value={100000000}>Müşteri Satış</MenuItem>
+                                <MenuItem value={100000001}>Üye Satış</MenuItem>
+                            </TextField>
                         </Grid>
 
                         <Grid item {...gridItemSize}>
                             <TextField
+                                type="date"
                                 label="Tahmini Kapanış Tarihi"
                                 fullWidth
                                 variant="outlined"
@@ -304,14 +345,15 @@ const OpportunitiesCreate: React.FC = () => {
                                 name="EstimatedCloseDate"
                                 value={opportunity.EstimatedCloseDate}
                                 onChange={handleInputChange}
-                            // InputProps={{
-                            // readOnly: true,
-                            // }}
+                                InputLabelProps={{
+                                    shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
+                                }}
                             />
                         </Grid>
 
                         <Grid item {...gridItemSize}>
                             <TextField
+                                select
                                 label="Fırsatın Durumu"
                                 fullWidth
                                 variant="outlined"
@@ -319,10 +361,13 @@ const OpportunitiesCreate: React.FC = () => {
                                 name="OpportunityRatingCode"
                                 value={opportunity.OpportunityRatingCode}
                                 onChange={handleInputChange}
-                            // InputProps={{
-                            // readOnly: true,
-                            // }}
-                            />
+                            >
+                                <MenuItem value="">---</MenuItem>
+                                <MenuItem value={1}>Sıcak</MenuItem>
+                                <MenuItem value={2}>Ilık</MenuItem>
+                                <MenuItem value={3}>Soğuk</MenuItem>
+
+                            </TextField>
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
@@ -333,24 +378,22 @@ const OpportunitiesCreate: React.FC = () => {
                                 name="EstimatedRevenue"
                                 value={opportunity.EstimatedRevenue}
                                 onChange={handleInputChange}
-                            // InputProps={{
-                            // readOnly: true,
-                            // }}
                             />
                         </Grid>
 
                         <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Geliş Kaynağı"
-                                fullWidth
-                                variant="outlined"
-                                id="LeadSource"
-                                name="LeadSource"
-                                value={opportunity.LeadSource}
-                                onChange={handleInputChange}
-                            // InputProps={{
-                            // readOnly: true,
-                            // }}
+                            <OptionSet
+                                apiEndpoint="api/search-lookup-by-optionsetname/new_source"
+                                label="Fırsat Kaynağı"
+                                getCRMData={getCRMData}
+                                selectedValue={ opportunity.LeadSource?.Value !== 0
+                                    ? { Value: opportunity.LeadSource.Value, Label: opportunity.LeadSource.Label }
+                                    : null
+                                }
+                                onValueChange={handleSelectOptionFieldChange('LeadSource')}
+                                error={!!errors.LeadSource} // Hata kontrolü
+                                helperText={errors.LeadSource ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
 

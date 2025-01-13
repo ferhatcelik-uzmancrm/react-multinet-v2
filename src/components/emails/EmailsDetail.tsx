@@ -76,12 +76,13 @@ const EmailsDetail: React.FC = () => {
   const [email, setEmail] = useState<Email>({
     EmailId: "",
     Subject: "",
-    From: { Id: "", Name: "" },
+    Message: "",
+    From: { Id: "", Name: "" , LogicalName: ""},
     To: [], // Initialize as an empty array for multiple recipients
     Cc: [], // Initialize as an empty array for CC recipients
     Bcc: [], // Initialize as an empty array for BCC recipients
     IsMultiNetActivity: false,
-    RegardingObjectId: { Id: "", Name: "" },
+    RegardingObjectId: { Id: "", Name: "", LogicalName:"" },
     ActualDurationMinutes: null, // Initialize as null
   });
 
@@ -257,7 +258,7 @@ const EmailsDetail: React.FC = () => {
                 variant="outlined"
                 id="Message"
                 name="Message"
-                value={email.Subject}
+                value={email.Message}
                 onChange={handleInputChange}
               />
             </Grid>

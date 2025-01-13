@@ -1,14 +1,30 @@
 import { ThemeProvider } from "@emotion/react";
-import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import {
+  KeyboardDoubleArrowLeftRounded,
+  KeyboardDoubleArrowRightRounded,
+} from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Container,
+  createTheme,
+  Grid,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Email } from "../../models/Email";
-import { sendRequest } from "../../requests/ApiCall";
+import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { GenericAutocomplete } from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 
 const gridItemSize = {
   xs: 12,
@@ -22,12 +38,16 @@ const EmailsCreate: React.FC = () => {
   const { selectedBrand } = useAppContext();
   const location = useLocation();
   const stateData = location.state?.data || [];
+  const user = {
+    Id: localStorage.getItem("crmuserid"),
+    Name: localStorage.getItem("crmusername"),
+  };
   console.log(stateData);
-  const steps = [''];
+  const steps = [""];
   const [alertState, setAlertState] = useState({
-    message: '',
-    type: 'success' as 'success' | 'danger',
-    position: 'bottom-right' as 'bottom-right' | 'center',
+    message: "",
+    type: "success" as "success" | "danger",
+    position: "bottom-right" as "bottom-right" | "center",
     showProgress: false,
     isOpen: false,
   });
@@ -69,19 +89,24 @@ const EmailsCreate: React.FC = () => {
     palette: {
       primary: {
         main: btnColor,
-      }
+      },
     },
   });
 
   const [email, setEmail] = useState<Email>({
     EmailId: "",
     Subject: "",
-    From: { Id: "", Name: "" },
+    Message: "",
+    From: {
+      Id: user.Id || "",
+      Name: user.Name || "",
+      LogicalName: "systemuser",
+    },
     To: [], // Initialize as an empty array for multiple recipients
     Cc: [], // Initialize as an empty array for CC recipients
     Bcc: [], // Initialize as an empty array for BCC recipients
     IsMultiNetActivity: false,
-    RegardingObjectId: { Id: "", Name: "" },
+    RegardingObjectId: { Id: "", Name: "", LogicalName: "" },
     ActualDurationMinutes: null, // Initialize as null
   });
 
@@ -96,7 +121,7 @@ const EmailsCreate: React.FC = () => {
       [name]: value,
     }));
 
-    console.log("Error name: ", name)
+    console.log("Error name: ", name);
 
     if (errors[name]) {
       setErrors((prevErrors) => ({
@@ -106,12 +131,33 @@ const EmailsCreate: React.FC = () => {
     }
   };
 
+  const handleSelectFieldChange2 =
+    (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map((option) => option.Id).join(", ");
+        const selectedNames = value.map((option) => option.Name).join(", ");
+        setEmail((prev) => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames },
+        }));
+      } else {
+        // Tekli seçim modunda
+        setEmail((prev) => ({
+          ...prev,
+          [fieldName]: {
+            Id: value ? value.Id : "",
+            Name: value ? value.Name : "",
+          },
+        }));
+      }
+    };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const requiredFields = [
-      'Subject',
-    ];
+    const requiredFields = ["Subject"];
 
     const newErrors: { [key: string]: boolean } = {};
 
@@ -125,38 +171,37 @@ const EmailsCreate: React.FC = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setAlertState({
-        message: 'Lütfen tüm zorunlu alanları doldurun.',
-        type: 'danger',
-        position: 'bottom-right',
+        message: "Lütfen tüm zorunlu alanları doldurun.",
+        type: "danger",
+        position: "bottom-right",
         showProgress: false,
         isOpen: true,
       });
       return;
     }
 
-    console.log('Form submitted successfully', email);
+    console.log("Form submitted successfully", email);
 
-
-    setLoading(true)
+    setLoading(true);
 
     try {
       await sendRequest("api/upsert-email", email)
-        .then(response => {
-          console.log("Email created:", response.data)
+        .then((response) => {
+          console.log("Email created:", response.data);
           setAlertState({
             message: "Email created successfully!",
-            type: 'success',
-            position: 'bottom-right',
+            type: "success",
+            position: "bottom-right",
             showProgress: true,
             isOpen: true,
           });
         })
-        .catch(error => {
-          console.error("Error creating email:", error)
+        .catch((error) => {
+          console.error("Error creating email:", error);
           setAlertState({
             message: "Error creating email. Please try again.",
-            type: 'danger',
-            position: 'bottom-right',
+            type: "danger",
+            position: "bottom-right",
             showProgress: true,
             isOpen: true,
           });
@@ -165,14 +210,13 @@ const EmailsCreate: React.FC = () => {
       console.error("Error:", error);
       setAlertState({
         message: "Error creating email. Please try again.",
-        type: 'danger',
-        position: 'bottom-right',
+        type: "danger",
+        position: "bottom-right",
         showProgress: true,
         isOpen: true,
       });
-    }
-    finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
 
     // window.location.reload();
@@ -206,7 +250,6 @@ const EmailsCreate: React.FC = () => {
       case 0:
         return (
           <Grid container spacing={3}>
-
             <Grid item {...gridItemSize}>
               <TextField
                 label="Konu"
@@ -219,18 +262,38 @@ const EmailsCreate: React.FC = () => {
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/get-all-customers"
                 label="Kimden"
-                fullWidth
-                variant="outlined"
-                id="From"
-                name="From"
-                value={email.From}
-                onChange={handleInputChange}
+                getCRMData={getCRMData}
+                selectedValue={
+                  email.From
+                    ? {
+                        Id: email.From.Id,
+                        Name: email.From.Name,
+                        LogicalName: "",
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("From")}
+                error={!!errors.From} // Hata kontrolü
+                helperText={errors.From ? "Bu alan zorunludur" : ""} // Hata mesajı
+                disabled={true}
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-activities"
+                label="Kime"
+                getCRMData={getCRMData}
+                selectedValue={email.To ? email.To : null}
+                onValueChange={handleSelectFieldChange2("To")}
+                error={!!errors.To} // Hata kontrolü
+                helperText={errors.To ? "Bu alan zorunludur" : ""} // Hata mesajı
+                isMulti={true}
+                required={true}
+              />
+              {/* <TextField
                 label="Kime"
                 fullWidth
                 variant="outlined"
@@ -238,10 +301,21 @@ const EmailsCreate: React.FC = () => {
                 name="To"
                 value={email.To}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-activities"
+                label="Bilgi"
+                getCRMData={getCRMData}
+                selectedValue={email.Cc ? email.Cc : null}
+                onValueChange={handleSelectFieldChange2("Cc")}
+                error={!!errors.Cc} // Hata kontrolü
+                helperText={errors.Cc ? "Bu alan zorunludur" : ""} // Hata mesajı
+                isMulti={true}
+                required={false}
+              />
+              {/* <TextField
                 label="Bilgi"
                 fullWidth
                 variant="outlined"
@@ -249,10 +323,21 @@ const EmailsCreate: React.FC = () => {
                 name="Cc"
                 value={email.Cc}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-activities"
+                label="Gizli"
+                getCRMData={getCRMData}
+                selectedValue={email.Bcc ? email.Bcc : null}
+                onValueChange={handleSelectFieldChange2("Bcc")}
+                error={!!errors.Bcc} // Hata kontrolü
+                helperText={errors.Bcc ? "Bu alan zorunludur" : ""} // Hata mesajı
+                isMulti={true}
+                required={false}
+              />
+              {/* <TextField
                 label="Gizli"
                 fullWidth
                 variant="outlined"
@@ -260,7 +345,7 @@ const EmailsCreate: React.FC = () => {
                 name="Bcc"
                 value={email.Bcc}
                 onChange={handleInputChange}
-              />
+              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
@@ -269,15 +354,14 @@ const EmailsCreate: React.FC = () => {
                 variant="outlined"
                 id="Message"
                 name="Message"
-                value={email.Subject}
+                value={email.Message}
                 onChange={handleInputChange}
               />
             </Grid>
-
           </Grid>
         );
       default:
-        return 'Unknown step';
+        return "Unknown step";
     }
   };
 
@@ -285,16 +369,15 @@ const EmailsCreate: React.FC = () => {
     <Container
       sx={{
         maxWidth: {
-          xs: '100%',
-          sm: '600px',
-          md: '960px',
-          lg: '1280px',
-          xl: '1920px',
+          xs: "100%",
+          sm: "600px",
+          md: "960px",
+          lg: "1280px",
+          xl: "1920px",
         },
-        display: 'block',
+        display: "block",
       }}
     >
-
       {/* CUSTOM ALERT */}
       <AlertComponent
         message={alertState.message}
@@ -306,13 +389,15 @@ const EmailsCreate: React.FC = () => {
       />
       {/* CUSTOM ALERT */}
 
-      {loading ? <Spinner type="hash" size={50} color="#d0052d" /> : (
-        <Box sx={{ width: '100%' }}>
+      {loading ? (
+        <Spinner type="hash" size={50} color="#d0052d" />
+      ) : (
+        <Box sx={{ width: "100%" }}>
           <ThemeProvider theme={defaultTheme}>
             <Stepper
               activeStep={activeStep}
               sx={{
-                '& .MuiSvgIcon-root': {
+                "& .MuiSvgIcon-root": {
                   color:
                     selectedBrand === BrandOptions.Budget
                       ? BrandColors.Budget
@@ -339,8 +424,8 @@ const EmailsCreate: React.FC = () => {
               <Typography sx={{ mt: 2, mb: 1 }}>
                 All steps completed - you&apos;re finished
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                <Box sx={{ flex: '1 1 auto' }} />
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+                <Box sx={{ flex: "1 1 auto" }} />
                 <Button onClick={handleReset}>Reset</Button>
               </Box>
             </React.Fragment>
@@ -352,22 +437,22 @@ const EmailsCreate: React.FC = () => {
                   {getStepContactContent(activeStep)}
                 </form>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
                 {/* Back Button */}
                 <Button
                   sx={{
                     m: 1,
-                    width: '25px',
-                    borderColor: 'GrayText',
-                    '&:hover': {
+                    width: "25px",
+                    borderColor: "GrayText",
+                    "&:hover": {
                       borderColor:
                         selectedBrand === BrandOptions.Budget
                           ? BrandColors.Budget
                           : BrandColors.AvisDark,
-                      cursor: 'pointer',
+                      cursor: "pointer",
                     },
-                    '&:active': {
-                      color: 'dark',
+                    "&:active": {
+                      color: "dark",
                     },
                   }}
                   variant="outlined"
@@ -377,21 +462,21 @@ const EmailsCreate: React.FC = () => {
                   <KeyboardDoubleArrowLeftRounded
                     sx={{
                       color: btnColor,
-                      '&:hover': {
+                      "&:hover": {
                         color:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       },
-                      '&:active': {
-                        color: 'dark',
+                      "&:active": {
+                        color: "dark",
                       },
                     }}
                   />
                 </Button>
 
-                <Box sx={{ flex: '1 1 auto' }} />
+                <Box sx={{ flex: "1 1 auto" }} />
 
                 {/* Next or Submit Button */}
                 {activeStep === steps.length - 1 ? (
@@ -403,7 +488,7 @@ const EmailsCreate: React.FC = () => {
                         m: 1,
                         color: btnColor,
                         borderColor: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           borderColor:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.BudgetDark
@@ -412,8 +497,8 @@ const EmailsCreate: React.FC = () => {
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          color: '#fff',
-                          justifyContent: 'flex-end',
+                          color: "#fff",
+                          justifyContent: "flex-end",
                         },
                       }}
                     >
@@ -426,32 +511,32 @@ const EmailsCreate: React.FC = () => {
                     onClick={handleNext}
                     sx={{
                       m: 1,
-                      width: '25px',
-                      borderColor: 'GrayText',
-                      '&:hover': {
+                      width: "25px",
+                      borderColor: "GrayText",
+                      "&:hover": {
                         borderColor:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       },
-                      '&:active': {
-                        color: 'dark',
+                      "&:active": {
+                        color: "dark",
                       },
                     }}
                   >
                     <KeyboardDoubleArrowRightRounded
                       sx={{
                         color: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           color:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          cursor: 'pointer',
+                          cursor: "pointer",
                         },
-                        '&:active': {
-                          color: 'dark',
+                        "&:active": {
+                          color: "dark",
                         },
                       }}
                     />
@@ -464,7 +549,6 @@ const EmailsCreate: React.FC = () => {
       )}
     </Container>
   );
-
 };
 
 export default EmailsCreate;

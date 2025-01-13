@@ -27,6 +27,7 @@ import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { fakeAppoData } from "../../fake/fakeAppoData";
 import { Appointment } from "../../models/Appointment";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
+import Pagination from '../../helper/Pagination';
 
 type Order = "asc" | "desc";
 
@@ -91,15 +92,19 @@ export default function AppointmentTable() {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [appointments, setAppointments] = useState<Appointment[] | null>([]);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [paginatedData, setPaginatedData] = useState<Appointment[] | null>([]);
+  const [itemsPerPage] = useState<number>(10);
+
+  const totalPages = appointments ? Math.ceil(appointments.length / itemsPerPage) : 0;
 
   const handleSearchInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setSearchQuery(event.target.value);
-    console.log(searchQuery);
   };
 
   const appointmentRequest = useMemo(() => ({
@@ -121,6 +126,11 @@ export default function AppointmentTable() {
     fetchData();
   }, [appointmentRequest]);
 
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentData = appointments?.slice(startIndex, startIndex + itemsPerPage) || [];
+    setPaginatedData(currentData);
+  }, [currentPage, appointments, itemsPerPage]);
 
   const handleApiSearch = async () => {
     try {
@@ -152,34 +162,30 @@ export default function AppointmentTable() {
       row.ActivityTypeId.Name.toLowerCase().includes(searchQuery.toLowerCase())
     ) : [];
 
+  // 2. Arama sonuçlarını sayfalara böl
+  const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const renderFilters = () => (
     <React.Fragment>
-      <FormControl size="sm">
-        <FormLabel>Durum</FormLabel>
-        <Select
-          size="md"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
+      <FormControl sx={{ flex: 0 }} size="sm">
+        <FormLabel>Ziyaret oluştur</FormLabel>
+        <MaterialButton
+          variant="contained"
+          sx={{
+            border: "none",
+            textTransform: "capitalize",
+            color: "white",
+            backgroundColor: "#211d3c",
+            fontSize: "16px",
+            "&:hover": {
+              backgroundColor: "#f7a724",
+            },
+          }}
+          disabled={loading}
+          onClick={createClick}
         >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select>
-      </FormControl>
-
-      <FormControl size="sm">
-        <FormLabel>Kategori</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select>
-      </FormControl>
-
-      <FormControl size="sm">
-        <FormLabel>Müşteri</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select>
+          Yeni Ziyaret
+        </MaterialButton>
       </FormControl>
     </React.Fragment>
   );
@@ -237,9 +243,6 @@ export default function AppointmentTable() {
             <Divider sx={{ my: 2 }} />
             <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {renderFilters()}
-              <Button color="primary" onClick={() => setOpen(false)}>
-                Submit
-              </Button>
             </Sheet>
           </ModalDialog>
         </Modal>
@@ -290,28 +293,6 @@ export default function AppointmentTable() {
         </FormControl>
 
         {renderFilters()}
-
-        <FormControl sx={{ flex: 0 }} size="sm">
-          <FormLabel>Ziyaret oluştur</FormLabel>
-          <MaterialButton
-            variant="contained"
-            sx={{
-              border: "none",
-              textTransform: "capitalize",
-              color: "white",
-              backgroundColor: "#211d3c",
-              fontSize: "16px",
-              "&:hover": {
-                backgroundColor: "#f7a724",
-              },
-            }}
-            disabled={loading}
-            onClick={createClick}
-          >
-            Yeni Ziyaret
-          </MaterialButton>
-        </FormControl>
-
       </Box>
       <Sheet
         className="OrderTableContainer"
@@ -404,8 +385,8 @@ export default function AppointmentTable() {
             </tr>
           </thead>
           <tbody>
-            {appointments !== null && Array.isArray(appointments) ? (
-              stableSort(filteredRows, getComparator(order, "AppointmentId")).map((row) => (
+            {paginatedRows !== null && Array.isArray(paginatedRows) ? (
+              stableSort(paginatedRows, getComparator(order, "AppointmentId")).map((row) => (
                 <tr key={row.AppointmentId}>
                   {/* Checkbox */}
                   <td style={{ textAlign: "center" }}>
@@ -457,73 +438,12 @@ export default function AppointmentTable() {
             )}          </tbody>
         </Table>
       </Sheet>
-      <Box
-        className="Pagination-mobile"
-        sx={{ display: { xs: "flex", md: "none" }, alignItems: "center" }}
-      >
-        <IconButton
-          aria-label="previous page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-left" />
-        </IconButton>
-        <Typography level="body-sm" mx="auto">
-          Page 1 of 10
-        </Typography>
-        <IconButton
-          aria-label="next page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-right" />
-        </IconButton>
-      </Box>
-      <Box
-        className="Pagination-laptopUp"
-        sx={{
-          pt: 4,
-          gap: 1,
-          [`& .${iconButtonClasses.root}`]: { borderRadius: "50%" },
-          display: {
-            xs: "none",
-            md: "flex",
-          },
-        }}
-      >
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          startDecorator={<i data-feather="arrow-left" />}
-        >
-          Önceki
-        </Button>
-
-        <Box sx={{ flex: 1 }} />
-        {["1", "2", "3", "…", "8", "9", "10"].map((page) => (
-          <IconButton
-            key={page}
-            size="sm"
-            variant={Number(page) ? "outlined" : "plain"}
-            color="neutral"
-          >
-            {page}
-          </IconButton>
-        ))}
-        <Box sx={{ flex: 1 }} />
-
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          endDecorator={<i data-feather="arrow-right" />}
-        >
-          Sonraki
-        </Button>
-      </Box>
+      {/* Sayfalama */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </React.Fragment>
   );
 }

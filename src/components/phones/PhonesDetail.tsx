@@ -9,6 +9,8 @@ import { Phone } from "../../models/Phone";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 
 // const gridItemSize = {
 //   xs: 12,
@@ -38,7 +40,7 @@ const PhonesDetail: React.FC = () => {
   };
 
   const [loading, setLoading] = useState(Boolean);
-
+  const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
 
@@ -77,14 +79,14 @@ const PhonesDetail: React.FC = () => {
   const [phone, setPhone] = useState<Phone>({
     PhoneId: "",
     Subject: "",
-    From: { Id: "", Name: "" },
-    To: { Id: "", Name: "" },
-    RegardingObjectId: { Id: "", Name: "" },
+    From: [],
+    To: [],
+    RegardingObjectId: { Id: "", Name: "", LogicalName: "" },
     PhoneNumber: "",
     DirectionCode: false,
-    ActivityTypeId: { Id: "", Name: "" },
-    ActivityReasonId: { Id: "", Name: "" },
-    ActivityStateId: { Id: "", Name: "" },
+    ActivityTypeId: { Id: "", Name: "", LogicalName: "" },
+    ActivityReasonId: { Id: "", Name: "", LogicalName: "" },
+    ActivityStateId: { Id: "", Name: "", LogicalName: "" },
     AramaKod: "",
     Gakampnayaad: "",
     IsPlannedActivity: false,
@@ -114,7 +116,40 @@ const PhonesDetail: React.FC = () => {
   //     [name]: value,
   //   }));
   // };
-
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda birden fazla seçili öğe varsa
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setPhone((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+      } else {
+        // Tekli seçim modunda
+        setPhone((prev) => ({
+          ...prev,
+          [idField]: value ? value.Id : null,
+          [nameField]: value ? value.Name : '',
+        }));
+      }
+    };
+  const handleSelectFieldChange2 = (fieldName: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map(option => option.Id).join(', ');
+        const selectedNames = value.map(option => option.Name).join(', ');
+        setPhone(prev => ({
+          ...prev,
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setPhone(prev => ({
+          ...prev,
+          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+        }));
+      }
+    };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // alert(JSON.stringify(lead))
@@ -213,24 +248,28 @@ const PhonesDetail: React.FC = () => {
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-activities"
                 label="Gönderen"
-                fullWidth
-                variant="outlined"
-                name="From"
-                value={phone.From ? phone.From.Name : ''}
-              // onChange={handleInputChange}
+                getCRMData={getCRMData}
+                selectedValue={phone.From ? phone.From : null}
+                onValueChange={handleSelectFieldChange2('From')}
+                error={!!errors.From} // Hata kontrolü
+                helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                isMulti={true}
               />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-partylist-by-activities"
                 label="Alıcı"
-                fullWidth
-                variant="outlined"
-                name="To"
-                value={phone.To ? phone.To.Name : ''}
-              // onChange={handleInputChange}
+                getCRMData={getCRMData}
+                selectedValue={phone.To ? phone.To : null}
+                onValueChange={handleSelectFieldChange2('To')}
+                error={!!errors.To} // Hata kontrolü
+                helperText={errors.To ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                isMulti={true}
               />
             </Grid>
 

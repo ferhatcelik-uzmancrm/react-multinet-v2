@@ -1,16 +1,16 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, Grid, Step, StepLabel, Stepper, MenuItem, TextField, Typography, createTheme } from "@mui/material";
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, MenuItem,TextField, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import { InterestedProduct } from "../../models/InterestedProduct";
-import {GenericAutocomplete} from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/shared/Lookup";
+import { Offer } from "../../models/Offers";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 
 const gridItemSize = {
     xs: 12,
@@ -20,12 +20,11 @@ const gridItemSize = {
     xl: 6,
 };
 
-const InterestedProductsCreate: React.FC = () => {
+const OffersCreate: React.FC = () => {
     const { selectedBrand } = useAppContext();
     const location = useLocation();
     const navigate = useNavigate();
     const stateData = location.state?.data || [];
-    console.log(stateData);
     const steps = ['', ''];
     const [alertState, setAlertState] = useState({
         message: '',
@@ -77,37 +76,68 @@ const InterestedProductsCreate: React.FC = () => {
         },
     });
 
+    const [offer, setOffer] = useState<Offer>({
+        OfferId: "", // Assuming this can be an empty string or you might want to use null
+        Name: "", // Empty string for default
+        CustomerId: { Id: "", Name: "", LogicalName:"" }, // Empty string for default
+        SalesTypeCode: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        Possibility: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalRoleCode: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        IsSeasonal: false, // Default boolean value
+        OpportunityId: { Id: "", Name: "", LogicalName:"" }, // Required field, initialized as an empty string
+        QuoteType: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        QuoteEndDate: undefined, // Default to undefined for optional Date field
+        QuoteApprovalStatus: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        LeadSource: { Value: 0, Label: "" }, // Default OptionSetValueModel
 
-    const [interestedProduct, setInterestedProduct] = useState<InterestedProduct>({
-        InterestedProductId: "",
-        Name: "",
-        LeadId: { Id: "", Name: "", LogicalName:"" },
-        AccountId: { Id: "", Name: "", LogicalName:"" },
-        OpportunityId: { Id: "", Name: "", LogicalName:"" },
-        ContractId: { Id: "", Name: "", LogicalName:"" },
-        QuoteId: { Id: "", Name: "", LogicalName:"" },
-        IsCustomerOrMember: false,
-        ProductGroupId: { Id: "", Name: "", LogicalName:"" },
-        MainProductId: { Id: "", Name: "", LogicalName:"" },
-        ProductId: { Id: "", Name: "", LogicalName:"" },
-        Description: "",
-        SelfOwnedVehicleNumber: 0,
-        NumberLeasedCar: 0,
-        VehiclesRequested: 0,
-        RequestedRentalTime: 0,
-        OwnerId: crmOwner || "",
-        CreatedOn: null,
-        ModifiedOn: null
+        // Product properties
+        InterestProductId: { Id: "", Name: "", LogicalName:"" }, // Empty string for default
+        ProductGroupId: { Id: "", Name: "", LogicalName:"" }, // Empty string for default
+        PriceLevelId: { Id: "", Name: "", LogicalName:"" }, // Empty string for default
+        MainProductId: { Id: "", Name: "", LogicalName:"" }, // Empty string for default
+        ContractTerm: 0, // Default number value
+
+        // Sales Manager Approval properties
+        ApprovalStatus4Code: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalDate4: undefined, // Default to undefined for optional Date field
+        ConfirmingStId: "", // Empty string for default
+
+        // Regional Official/Deputy Manager Approval properties
+        ApprovalStatus1: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalDesc1: "", // Empty string for default
+        ApprovalDate1: undefined, // Default to undefined for optional Date field
+        ConfirmingBmId: "", // Empty string for default
+
+        // Coordinator/Manager Approval properties
+        ApprovalStatus2: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalDesc2: "", // Empty string for default
+        ApprovalDate2: undefined, // Default to undefined for optional Date field
+        ConfirmingKoId: "", // Empty string for default
+
+        // Collection Coordinator Approval properties
+        ApprovalStatus5Code: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalDesc5: "", // Empty string for default
+        ApprovalDate5: undefined, // Default to undefined for optional Date field
+        ConfirmingThId: "", // Empty string for default
+
+        // General Manager Approval properties
+        ApprovalStatus3: { Value: 0, Label: "" }, // Default OptionSetValueModel
+        ApprovalDesc3: "", // Empty string for default
+        ApprovalDate3: undefined, // Default to undefined for optional Date field
+        ConfirmingGmId: "", // Empty string for default
+
+        OwnerId: "", // Empty string for default
+        CreatedBy: undefined, // Default to undefined for optional field
+        CreatedOn: undefined, // Default to undefined for optional Date field
+        ModifiedOn: undefined, // Default to undefined for optional Date field
     });
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-        setInterestedProduct((prevLead) => ({
+        setOffer((prevLead) => ({
             ...prevLead,
             [name]: value,
         }));
-
-        console.log("Error name: ", name)
 
         if (errors[name]) {
             setErrors((prevErrors) => ({
@@ -117,9 +147,9 @@ const InterestedProductsCreate: React.FC = () => {
         }
     };
 
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
         const requiredFields = [
             'Name',
             'MainProductId',
@@ -130,22 +160,20 @@ const InterestedProductsCreate: React.FC = () => {
 
         const newErrors: { [key: string]: boolean } = {};
 
+
         requiredFields.forEach((field) => {
-            const value = interestedProduct[field as keyof typeof interestedProduct];
+            const value = offer[field as keyof typeof offer];
 
             if (typeof value === "object" && value !== null) {
+                // `LookupValueModel` türünde olup olmadığını kontrol et
                 if ("Id" in value && typeof value["Id"] === "string") {
                     if (!value["Id"]) {
                         newErrors[field] = true;
                     }
                 }
-            }else if (!value) {
+            } else if (!value) {
                 newErrors[field] = true;
             }
-
-            if (!interestedProduct[field as keyof typeof interestedProduct]) {
-                newErrors[field] = true;
-              }
         });
 
         setErrors(newErrors);
@@ -161,21 +189,13 @@ const InterestedProductsCreate: React.FC = () => {
             return;
         }
 
-        console.log('Form submitted successfully', interestedProduct);
-
-
         setLoading(true)
-
         try {
-            await sendRequest("api/upsert-interestedproduct", interestedProduct)
+            await sendRequest("api/create-offer", offer)
                 .then(response => {
-                    // console.log("Interested product created:", response.data)
-                    const createdId = response.data?.InterestedProductId; // ID'yi buradan alıyoruz (servis response modeline göre uyarlayın)
-                    if (createdId) {
-                        navigate(`/interestedproducts/detail/${createdId}`);
-                    }
+                    console.log("Offer created:", response.data)
                     setAlertState({
-                        message: "Interested product successfully!",
+                        message: "Offer created successfully!",
                         type: 'success',
                         position: 'bottom-right',
                         showProgress: true,
@@ -183,10 +203,9 @@ const InterestedProductsCreate: React.FC = () => {
                     });
                 })
                 .catch(error => {
-                    const errorMessage = error.response?.data?.message || error.message || "An unknown error occurred.";
-                    console.error("Error creating interested product:", errorMessage)
+                    console.error("Error creating offer:", error)
                     setAlertState({
-                        message: "Error creating interested product. Please try again." + errorMessage,
+                        message: "Error creating offer. Please try again.",
                         type: 'danger',
                         position: 'bottom-right',
                         showProgress: true,
@@ -196,7 +215,7 @@ const InterestedProductsCreate: React.FC = () => {
         } catch (error) {
             console.error("Error:", error);
             setAlertState({
-                message: "Error creating interested product. Please try again." + error,
+                message: "Error creating offer. Please try again.",
                 type: 'danger',
                 position: 'bottom-right',
                 showProgress: true,
@@ -239,68 +258,47 @@ const InterestedProductsCreate: React.FC = () => {
                 // Çoklu seçim modunda
                 const selectedIds = value.map(option => option.Id).join(', ');
                 const selectedNames = value.map(option => option.Name).join(', ');
-                setInterestedProduct(prev => ({
+                setOffer(prev => ({
                     ...prev,
                     [fieldName]: { Id: selectedIds, Name: selectedNames }
                 }));
             } else {
                 // Tekli seçim modunda
-                setInterestedProduct(prev => ({
+                setOffer(prev => ({
                     ...prev,
                     [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
                 }));
             }
         };
-
-    const getStepInterestedProductContent = (step: number) => {
+    //If companyType is contact
+    const getStepContactContent = (step: number) => {
         switch (step) {
             case 0:
                 return (
                     <Grid container spacing={3}>
                         <Grid item {...gridItemSize} sx={{ display: "none" }}>
                             <TextField
-                                label="Interested Product Id"
+                                label="Offer Id"
                                 fullWidth
                                 variant="outlined"
-                                name="InterestedProductId"
-                                value={interestedProduct.InterestedProductId}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="İlgilenilen Ürün"
-                                fullWidth
-                                variant="outlined"
-                                id="Name"
-                                name="Name"
-                                value={interestedProduct.Name}
-                                onChange={handleInputChange}
-                                required
-                                error={!!errors.Name}
-                                helperText={errors.Name ? 'Bu alan zorunludur' : ''}
+                                name="OfferId"
+                                value={offer.OfferId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/lead/companyname"
-                                label="Müşteri Adayı"
+                                apiEndpoint="api/get-all-customers"
+                                label="Müşteri"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.LeadId ? { Id: interestedProduct.LeadId.Id, Name: interestedProduct.LeadId.Name, LogicalName:"" } : null}
-                                onValueChange={handleSelectFieldChange2('LeadId')}
-                                error={!!errors.LeadId} // Hata kontrolü
-                                helperText={errors.LeadId ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/account/name"
-                                label="Firma"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.AccountId ? { Id: interestedProduct.AccountId.Id, Name: interestedProduct.AccountId.Name, LogicalName:"" } : null}
-                                onValueChange={handleSelectFieldChange2('AccountId')}
-                                error={!!errors.AccountId} // Hata kontrolü
-                                helperText={errors.AccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                selectedValue={offer.CustomerId ? { Id: offer.CustomerId.Id, Name: offer.CustomerId.Name, LogicalName: offer.CustomerId.LogicalName } : null}
+                                onValueChange={handleSelectFieldChange2('CustomerId')}
+                                error={!!errors.CustomerId} // Hata kontrolü
+                                helperText={errors.CustomerId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -308,33 +306,114 @@ const InterestedProductsCreate: React.FC = () => {
                                 apiEndpoint="api/search-lookup-by-name/opportunity/name"
                                 label="Fırsat"
                                 getCRMData={getCRMData}
-                                selectedValue={interestedProduct.OpportunityId ? { Id: interestedProduct.OpportunityId.Id, Name: interestedProduct.OpportunityId.Name , LogicalName:""} : null}
+                                selectedValue={offer.OpportunityId ? { Id: offer.OpportunityId.Id, Name: offer.OpportunityId.Name , LogicalName:""} : null}
                                 onValueChange={handleSelectFieldChange2('OpportunityId')}
+                                error={!!errors.OpportunityId} // Hata kontrolü
+                                helperText={errors.OpportunityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
                                 required={true}
-                                error={!!errors.AccountId} // Hata kontrolü
-                                helperText={errors.AccountId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                            />
+                        </Grid>
+
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                            select
+                                label="Satış Türü"
+                                fullWidth
+                                variant="outlined"
+                                id="SalesTypeCode"
+                                name="SalesTypeCode"
+                                value={offer.SalesTypeCode.Value}
+                                onChange={handleInputChange}
+                                required
+                                >
+                                <MenuItem value="">---</MenuItem>
+                                <MenuItem value={100000000}>Müşteri Satış</MenuItem>
+                                <MenuItem value={100000001}>Üye Satış</MenuItem>
+                            </TextField>
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Teklif Türü"
+                                fullWidth
+                                variant="outlined"
+                                id="QuoteType"
+                                name="QuoteType"
+                                value={offer.QuoteType.Label}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/quote/name"
-                                label="Teklif"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.QuoteId ? { Id: interestedProduct.QuoteId.Id, Name: interestedProduct.QuoteId.Name, LogicalName:"" } : null}
-                                onValueChange={handleSelectFieldChange2('QuoteId')}
-                                error={!!errors.QuoteId} // Hata kontrolü
-                                helperText={errors.QuoteId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                            <TextField
+                                label="Olasılık"
+                                fullWidth
+                                variant="outlined"
+                                id="Possibility"
+                                name="Possibility"
+                                value={offer.Possibility.Label}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/salesorder/name"
-                                label="Sözleşme"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ContractId ? { Id: interestedProduct.ContractId.Id, Name: interestedProduct.ContractId.Name , LogicalName:""} : null}
-                                onValueChange={handleSelectFieldChange2('ContractId')}
-                                error={!!errors.ContractId} // Hata kontrolü
-                                helperText={errors.ContractId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                            <TextField
+                                label="Teklif Son Geçerlilik Tarihi"
+                                fullWidth
+                                variant="outlined"
+                                id="QuoteEndDate"
+                                name="QuoteEndDate"
+                                value={offer.QuoteEndDate}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Onay Veren Rol"
+                                fullWidth
+                                variant="outlined"
+                                id="ApprovalRoleCode"
+                                name="ApprovalRoleCode"
+                                value={offer.ApprovalRoleCode.Label}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Sözleşme Onay Durumu"
+                                fullWidth
+                                variant="outlined"
+                                id="QuoteApprovalStatus"
+                                name="QuoteApprovalStatus"
+                                value={offer.QuoteApprovalStatus.Label}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Teklif Kaynağı"
+                                fullWidth
+                                variant="outlined"
+                                id="LeadSource"
+                                name="LeadSource"
+                                value={offer.LeadSource.Label}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                     </Grid>
@@ -343,121 +422,143 @@ const InterestedProductsCreate: React.FC = () => {
                 return (
                     <Grid container spacing={2}>
                         <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/rms_productgroup/rms_name"
+                            <TextField
+                                label="İlgilenilen Ürün"
+                                fullWidth
+                                variant="outlined"
+                                id="InterestProductId"
+                                name="InterestProductId"
+                                value={offer.InterestProductId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
                                 label="Ürün Grubu"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ProductGroupId ? { Id: interestedProduct.ProductGroupId.Id, Name: interestedProduct.ProductGroupId.Name , LogicalName:""} : null}
-                                onValueChange={handleSelectFieldChange2('ProductGroupId')}
-                                required={true}
-                                error={!!errors.ProductGroupId} // Hata kontrolü
-                                helperText={errors.ProductGroupId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                fullWidth
+                                variant="outlined"
+                                id="ProductGroupId"
+                                name="ProductGroupId"
+                                value={offer.ProductGroupId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/rms_mainproduct/rms_name"
+                            <TextField
+                                label="Fiyat Listesi"
+                                fullWidth
+                                variant="outlined"
+                                id="PriceLevelId"
+                                name="PriceLevelId"
+                                value={offer.PriceLevelId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
                                 label="Ana Ürün"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.MainProductId ? { Id: interestedProduct.MainProductId.Id, Name: interestedProduct.MainProductId.Name, LogicalName:"" } : null}
-                                onValueChange={handleSelectFieldChange2('MainProductId')}
-                                required={true}
-                                error={!!errors.MainProductId} // Hata kontrolü
-                                helperText={errors.MainProductId ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                                // filterParams={{
-                                //     rms_productgroupid: interestedProduct.ProductGroupId ? interestedProduct.ProductGroupId.Id : null,
-                                //   }}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <GenericAutocomplete
-                                apiEndpoint="api/search-lookup-by-name/product/name"
-                                label="Ürün"
-                                getCRMData={getCRMData}
-                                selectedValue={interestedProduct.ProductId ? { Id: interestedProduct.ProductId.Id, Name: interestedProduct.ProductId.Name, LogicalName:"" } : null}
-                                onValueChange={handleSelectFieldChange2('ProductId')}
-                                required={true}
-                                error={!!errors.ProductId} // Hata kontrolü
-                                helperText={errors.ProductId ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                                // filterParams={{
-                                //     rms_mainproductid: interestedProduct.MainProductId ? interestedProduct.MainProductId.Id : null,
-                                //   }}
+                                fullWidth
+                                variant="outlined"
+                                id="MainProductId"
+                                name="MainProductId"
+                                value={offer.MainProductId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
                             <TextField
-                                select
-                                label="Müşteri mi Üye mi?"
+                                label="Kontrat Süresi"
                                 fullWidth
                                 variant="outlined"
-                                id="IsCustomerOrMember"
-                                name="IsCustomerOrMember"
-                                value={Number(interestedProduct.IsCustomerOrMember)}
-                                onChange={handleInputChange}
-                            >
-                                <MenuItem value="">---</MenuItem>
-                                <MenuItem value={0}>Müşteri</MenuItem>
-                                <MenuItem value={1}>Üye</MenuItem>
+                                id="ContractTerm"
+                                name="ContractTerm"
+                                value={offer.ContractTerm}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
 
-                            </TextField>
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Açıklama"
-                                fullWidth
-                                variant="outlined"
-                                id="Description"
-                                name="Description"
-                                value={interestedProduct.Description}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Özmal Binek Araç Sayısı"
-                                fullWidth
-                                variant="outlined"
-                                id="SelfOwnedVehicleNumber"
-                                name="SelfOwnedVehicleNumber"
-                                value={interestedProduct.SelfOwnedVehicleNumber}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Kiralık Araç Sayısı"
-                                fullWidth
-                                variant="outlined"
-                                id="NumberLeasedCar"
-                                name="NumberLeasedCar"
-                                value={interestedProduct.NumberLeasedCar}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Talep Edilen Araç Sayısı"
-                                fullWidth
-                                variant="outlined"
-                                id="VehiclesRequested"
-                                name="VehiclesRequested"
-                                value={interestedProduct.VehiclesRequested}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                        <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Talep Edilen Kira Süresi"
-                                fullWidth
-                                variant="outlined"
-                                id="RequestedRentalTime"
-                                name="RequestedRentalTime"
-                                value={interestedProduct.RequestedRentalTime}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                    </Grid>
+                    </Grid >
                 );
+
+            case 2:
+                return (
+                    <Grid container spacing={2}>
+
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Onay Durumu"
+                                fullWidth
+                                variant="outlined"
+                                id="ApprovalStatus4Code"
+                                name="ApprovalStatus4Code"
+                                value={offer.ApprovalStatus4Code}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Onay/Ret Tarihi"
+                                fullWidth
+                                variant="outlined"
+                                id="ApprovalDate4"
+                                name="ApprovalDate4"
+                                value={offer.ApprovalDate4}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Onay/Ret Açıklaması"
+                                fullWidth
+                                variant="outlined"
+                                id="ApprovalDesc1"
+                                name="ApprovalDesc1"
+                                value={offer.ApprovalDesc1}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+                        <Grid item {...gridItemSize}>
+                            <TextField
+                                label="Onaylayan"
+                                fullWidth
+                                variant="outlined"
+                                id="ConfirmingStId"
+                                name="ConfirmingStId"
+                                value={offer.ConfirmingStId}
+                                // onChange={handleInputChange}
+                                InputProps={{
+                                    readOnly: true,
+                                }}
+                            />
+                        </Grid>
+
+                    </Grid >
+                )
             default:
                 return 'Unknown step';
         }
@@ -531,7 +632,7 @@ const InterestedProductsCreate: React.FC = () => {
                             <Box sx={{ mt: 3 }}>
                                 <form onSubmit={handleSubmit}>
                                     {/* Fill stepper content here. */}
-                                    {getStepInterestedProductContent(activeStep)}
+                                    {getStepContactContent(activeStep)}
                                 </form>
                             </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
@@ -577,31 +678,32 @@ const InterestedProductsCreate: React.FC = () => {
 
                                 {/* Next or Submit Button */}
                                 {activeStep === steps.length - 1 ? (
-                                    <form onSubmit={handleSubmit}>
-                                        <Button
-                                            variant="outlined"
-                                            type="submit"
-                                            sx={{
-                                                m: 1,
-                                                color: btnColor,
-                                                borderColor: btnColor,
-                                                '&:hover': {
-                                                    borderColor:
-                                                        selectedBrand === BrandOptions.Budget
-                                                            ? BrandColors.BudgetDark
-                                                            : BrandColors.AvisDark,
-                                                    backgroundColor:
-                                                        selectedBrand === BrandOptions.Budget
-                                                            ? BrandColors.Budget
-                                                            : BrandColors.AvisDark,
-                                                    color: '#fff',
-                                                    justifyContent: 'flex-end',
-                                                },
-                                            }}
-                                        >
-                                            Kaydet
-                                        </Button>
-                                    </form>
+                                    // <form onSubmit={handleSubmit}>
+                                    //   <Button
+                                    //     variant="outlined"
+                                    //     type="submit"
+                                    //     sx={{
+                                    //       m: 1,
+                                    //       color: btnColor,
+                                    //       borderColor: btnColor,
+                                    //       '&:hover': {
+                                    //         borderColor:
+                                    //           selectedBrand === BrandOptions.Budget
+                                    //             ? BrandColors.BudgetDark
+                                    //             : BrandColors.AvisDark,
+                                    //         backgroundColor:
+                                    //           selectedBrand === BrandOptions.Budget
+                                    //             ? BrandColors.Budget
+                                    //             : BrandColors.AvisDark,
+                                    //         color: '#fff',
+                                    //         justifyContent: 'flex-end',
+                                    //       },
+                                    //     }}
+                                    //   >
+                                    //     Güncelle
+                                    //   </Button>
+                                    // </form>
+                                    null
                                 ) : (
                                     <Button
                                         variant="outlined"
@@ -649,4 +751,4 @@ const InterestedProductsCreate: React.FC = () => {
 
 };
 
-export default InterestedProductsCreate;
+export default OffersCreate;

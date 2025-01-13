@@ -1,3 +1,5 @@
+import { LookupValueModel } from "./shared/LookupValueModel";
+
 export interface OptionSetValueModel {
   Value: number;
   Label: string;
@@ -6,22 +8,22 @@ export interface OptionSetValueModel {
 export interface Offer {
   OfferId: string;
   Name: string;
-  CustomerId: string;
+  CustomerId: LookupValueModel;
   SalesTypeCode: OptionSetValueModel; // Updated
   Possibility: OptionSetValueModel; // Updated
   ApprovalRoleCode: OptionSetValueModel; // Updated
   IsSeasonal: boolean;
-  OpportunityId: string;
+  OpportunityId: LookupValueModel;
   QuoteType: OptionSetValueModel; // Updated
   QuoteEndDate?: Date;
   QuoteApprovalStatus: OptionSetValueModel; // Updated
   LeadSource: OptionSetValueModel; // Updated
 
   // Product properties
-  InterestProductId: string;
-  ProductGroupId: string;
-  PriceLevelId: string;
-  MainProductId: string;
+  InterestProductId: LookupValueModel;
+  ProductGroupId: LookupValueModel;
+  PriceLevelId: LookupValueModel;
+  MainProductId: LookupValueModel;
   ContractTerm: number;
 
   // Sales Manager Approval properties

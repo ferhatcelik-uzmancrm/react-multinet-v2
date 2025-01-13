@@ -446,8 +446,8 @@ export default function PhonesTable() {
                   <td>
                     {row.Subject}
                   </td>
-                  <td>{row.From?.Name}</td>
-                  <td>{row.To?.Name}</td>
+                  <td>{row.From?.map(from => from.Name).join(', ')}</td>
+                  <td>{row.To?.map(to => to.Name).join(', ')}</td>
                   <td>{row.RegardingObjectId?.Name}</td>
                   <td>{row.PhoneNumber}</td>
                   <td style={{ textAlign: "right" }}>

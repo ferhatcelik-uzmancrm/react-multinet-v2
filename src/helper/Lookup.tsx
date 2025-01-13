@@ -167,7 +167,7 @@ export default GenericAutocomplete;
 //       setLoading(true);
 //       const response = await getCRMData(apiEndpoint, { ...requestParams, Name: query });
 //       setOptions(response.data);
-      
+
 //     } catch (error) {
 //       console.error("Error fetching data:", error);
 //     } finally {
@@ -181,7 +181,7 @@ export default GenericAutocomplete;
 //     } else {
 //       setOptions([]);
 //     }
-    
+
 //   }, 500);
 
 //   useEffect(() => {
@@ -236,7 +236,8 @@ import { Autocomplete, CircularProgress, TextField } from "@mui/material";
 import { AxiosResponse } from "axios";
 import { debounce } from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
-import { LookupOptionType } from "../models/Lookup";
+import { LookupOptionType } from "../models/shared/Lookup";
+import { OptionSetType } from "../models/shared/OptionSetValueModel";
 
 interface GenericAutocompleteProps {
   apiEndpoint: string;
@@ -259,7 +260,7 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   selectedValue = null,
   onValueChange,
   required = false,
-  disabled = false, 
+  disabled = false,
   error = false,
   helperText = '',
   isMulti = false,
@@ -287,7 +288,7 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
     UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
     Name: "",
     Filter: filterParams ? filterParams : {} // Filter null gelmesini engeller, boş nesne gönderir.
-}), [filterParams]);
+  }), [filterParams]);
 
   const fetchData = async (query: string) => {
     try {
@@ -363,6 +364,7 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
           {...params}
           label={label}
           variant="outlined"
+          placeholder="Arama yapmak için en az 3 karakter olacak şekilde veri giriniz."
           error={Boolean(error || localError)}
           helperText={localError || helperText}
           disabled={disabled}
@@ -381,4 +383,132 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   );
 };
 
-export default GenericAutocomplete;
+
+interface OptionSetProps {
+  apiEndpoint: string;
+  label: string;
+  getCRMData: (url: string, params: any) => Promise<AxiosResponse>;
+  selectedValue?: OptionSetType | OptionSetType[] | null;
+  onValueChange?: (value: OptionSetType | OptionSetType[] | null) => void;
+  required?: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  helperText?: string;
+  isMulti?: boolean; // Çoklu seçim opsiyonel
+  filterParams?: Record<string, any>; // Filtre parametreleri
+}
+const OptionSet: React.FC<OptionSetProps> = ({
+  apiEndpoint,
+  label,
+  getCRMData,
+  selectedValue = null,
+  onValueChange,
+  required = false,
+  disabled = false,
+  error = false,
+  helperText = "",
+  isMulti = false,
+  filterParams = null,
+}) => {
+  const [options, setOptions] = useState<OptionSetType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [hasFocus, setHasFocus] = useState(false);
+
+  const requestParams = useMemo(
+    () => ({
+      UserId: localStorage.getItem("userid")?.toString() || "",
+      CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
+      UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+      Name: inputValue,
+      Filter: filterParams ? filterParams : {}, // Filter null gelmesini engeller, boş nesne gönderir.
+    }),
+    [inputValue, filterParams]
+  );
+
+  const fetchData = async (query: string) => {
+    try {
+      setLoading(true);
+      const response = await getCRMData(apiEndpoint, {
+        ...filterParams,
+        Name: query,
+      });
+  
+      // Gelen veriyi kontrol edin
+      const data = Array.isArray(response.data) ? response.data : [];
+      setOptions(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setOptions([]); // Hata durumunda boş bir dizi atanır
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter") {
+      fetchData(""); // Enter tuşuna basıldığında veri çek
+      event.preventDefault(); // Default davranışı engelle
+    }
+  };
+
+  const handleBlur = () => {
+    if (required && (!selectedValue || (isMulti && (selectedValue as OptionSetType[]).length === 0))) {
+      setLocalError(`${label} alanı zorunludur.`);
+    } else {
+      setLocalError(null);
+    }
+
+    // Eğer dışarıdan bir hata varsa da bileşenin error durumunu kontrol edin
+    if (error && !localError) {
+      setLocalError(helperText);
+    }
+
+  };
+
+  return (
+    <Autocomplete
+      multiple={isMulti}
+      options={options}
+      getOptionLabel={(option) => option.Label || ""} // Name alanı yoksa boş döner
+      onBlur={handleBlur} // Zorunluluk kontrolü
+      onInputChange={(event, newInputValue) => {
+        setInputValue(newInputValue); // Kullanıcının yazdığı değeri takip et
+      }}
+      isOptionEqualToValue={(option, value) => option.Value === value.Value} // Eşleşme kontrolü
+      value={selectedValue} // Seçili değer
+      onChange={(event, value) => {
+        if (onValueChange) {
+          onValueChange(value); // Seçilen değeri bildir
+          setLocalError(null); // Hataları temizle
+        }
+      }}
+      loading={loading} // Yükleme durumunu göster
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          variant="outlined"
+          placeholder="Arama yapmak için enter tuşuna basınız" // Kullanıcıya bilgi ver
+          onKeyDown={(e) => handleKeyDown(e)} // Enter tuşu kontrolü
+          error={Boolean(error || localError)} // Hata durumu
+          helperText={localError || helperText} // Yardımcı metin
+          disabled={disabled} // Alanın devre dışı durumu
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+        />
+      )}
+    />
+  );
+};
+
+export { OptionSet, GenericAutocomplete };

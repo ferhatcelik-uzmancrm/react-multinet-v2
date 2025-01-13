@@ -1,7 +1,5 @@
-export interface LookupValueModel {
-  Id: string;
-  Name: string;
-}
+import { LookupValueModel } from "./shared/LookupValueModel";
+
 
 export interface InterestedProduct{
   InterestedProductId: string;

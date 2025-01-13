@@ -1,13 +1,13 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, createTheme, Grid, MenuItem, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import GenericAutocomplete from "../../helper/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 import { Phone } from "../../models/Phone";
-import { LookupOptionType } from "../../models/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -70,14 +70,14 @@ const PhonesCreate: React.FC = () => {
   const [phone, setPhone] = useState<Phone>({
     PhoneId: "",
     Subject: "",
-    From: { Id: "", Name: "" },
-    To: { Id: "", Name: "" },
-    RegardingObjectId: { Id: "", Name: "" },
+    From: [],
+    To: [],
+    RegardingObjectId: { Id: "", Name: "", LogicalName: "" },
     PhoneNumber: "",
     DirectionCode: false,
-    ActivityTypeId: { Id: "", Name: "" },
-    ActivityReasonId: { Id: "", Name: "" },
-    ActivityStateId: { Id: "", Name: "" },
+    ActivityTypeId: { Id: "", Name: "", LogicalName: "" },
+    ActivityReasonId: { Id: "", Name: "", LogicalName: "" },
+    ActivityStateId: { Id: "", Name: "", LogicalName: "" },
     AramaKod: "",
     Gakampnayaad: "",
     IsPlannedActivity: false,
@@ -138,8 +138,8 @@ const PhonesCreate: React.FC = () => {
 
     const requiredFields = [
       'Subject',
-      'From',
-      'To'
+      'From.Id',
+      'To.Id'
     ];
 
     const newErrors: { [key: string]: boolean } = {};
@@ -256,48 +256,36 @@ const PhonesCreate: React.FC = () => {
                 name="Subject"
                 value={phone.Subject}
                 onChange={handleInputChange}
+                required={true}
               />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
               <GenericAutocomplete
-                apiEndpoint="api/search-partylist-by-name/phonecall/from"
+                apiEndpoint="api/search-partylist-by-activities"
                 label="Arayan Kişi"
                 getCRMData={getCRMData}
-                selectedValue={phone.From ? { Id: phone.From.Id, Name: phone.From.Name } : null}
+                selectedValue={phone.From ? phone.From : null}
                 onValueChange={handleSelectFieldChange2('From')}
                 error={!!errors.From} // Hata kontrolü
                 helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                isMulti={true}
+                required={true}
               />
-              {/* <TextField
-                label="Gönderen"
-                fullWidth
-                variant="outlined"
-                name="From"
-                value={phone.From ? phone.From.Name : ''}
-                onChange={handleInputChange}
-              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
               <GenericAutocomplete
-                apiEndpoint="api/search-partylist-by-name/phonecall/to"
+                apiEndpoint="api/search-partylist-by-activities"
                 label="Arama Hedefi"
                 getCRMData={getCRMData}
-                selectedValue={phone.To ? { Id: phone.To.Id, Name: phone.To.Name } : null}
+                selectedValue={phone.To ? phone.To : null}
                 onValueChange={handleSelectFieldChange2('To')}
                 error={!!errors.To} // Hata kontrolü
                 helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                isMulti={false}
+                isMulti={true}
+                required={true}
               />
-              {/* <TextField
-                label="Alıcı"
-                fullWidth
-                variant="outlined"
-                name="To"
-                value={phone.To ? phone.To.Name : ''}
-                onChange={handleInputChange}
-              /> */}
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
@@ -328,13 +316,18 @@ const PhonesCreate: React.FC = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField
+                select
                 label="Yönlendirme Kodu"
                 fullWidth
                 variant="outlined"
                 name="DirectionCode"
-                value={phone.DirectionCode ? phone.DirectionCode : ''}
+                value={phone.DirectionCode ? Number(phone.DirectionCode) : ''}
                 onChange={handleInputChange}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={0}>Gelen</MenuItem>
+                <MenuItem value={1}>Giden</MenuItem>
+              </TextField>
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
@@ -342,7 +335,7 @@ const PhonesCreate: React.FC = () => {
                 apiEndpoint="api/search-lookup-by-name/new_activitytype/new_name"
                 label="Aktivite Türü"
                 getCRMData={getCRMData}
-                selectedValue={phone.ActivityTypeId ? { Id: phone.ActivityTypeId.Id, Name: phone.ActivityTypeId.Name } : null}
+                selectedValue={phone.ActivityTypeId ? { Id: phone.ActivityTypeId.Id, Name: phone.ActivityTypeId.Name, LogicalName: phone.ActivityTypeId.LogicalName } : null}
                 onValueChange={handleSelectFieldChange2('ActivityTypeId')}
                 error={!!errors.ActivityTypeId} // Hata kontrolü
                 helperText={errors.ActivityTypeId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -360,9 +353,9 @@ const PhonesCreate: React.FC = () => {
             <Grid item xs={12} sm={6} md={4}>
               <GenericAutocomplete
                 apiEndpoint="api/search-lookup-by-name/new_activityreason/new_name"
-                label="Aktivite Sebepleri"
+                label="Arama Sebepleri"
                 getCRMData={getCRMData}
-                selectedValue={phone.ActivityReasonId ? { Id: phone.ActivityReasonId.Id, Name: phone.ActivityReasonId.Name } : null}
+                selectedValue={phone.ActivityReasonId ? { Id: phone.ActivityReasonId.Id, Name: phone.ActivityReasonId.Name, LogicalName: phone.ActivityReasonId.LogicalName } : null}
                 onValueChange={handleSelectFieldChange2('ActivityReasonId')}
                 error={!!errors.ActivityReasonId} // Hata kontrolü
                 helperText={errors.ActivityReasonId ? 'Bu alan zorunludur' : ''} // Hata mesajı
@@ -390,13 +383,18 @@ const PhonesCreate: React.FC = () => {
 
             <Grid item xs={12} sm={6} md={4}>
               <TextField
+                select
                 label="Planlı Etkinlik"
                 fullWidth
                 variant="outlined"
                 name="IsPlannedActivity"
-                value={phone.IsPlannedActivity ? phone.IsPlannedActivity : ''}
+                value={phone.IsPlannedActivity ? Number(phone.IsPlannedActivity) : ''}
                 onChange={handleInputChange}
-              />
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={0}>Hayır</MenuItem>
+                <MenuItem value={1}>Evet</MenuItem>
+              </TextField>
             </Grid>
 
           </Grid >

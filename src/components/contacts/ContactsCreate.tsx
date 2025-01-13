@@ -5,9 +5,9 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import GenericAutocomplete from "../../helper/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 import { Contact } from "../../models/Contact";
-import { LookupOptionType } from "../../models/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
@@ -78,6 +78,7 @@ const ContactsCreate: React.FC = () => {
 
     const [contact, setContact] = useState<Contact>({
         ContactId: id || "",
+        FullName: "",
         FirstName: "",
         LastName: "",
         ContactTitleId: "",
@@ -106,98 +107,22 @@ const ContactsCreate: React.FC = () => {
         CreatedBy: crmOwner || "",
     });
 
-    const handleParentCustomerChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setContact(prevContact => ({
-                ...prevContact,
-                ParentCustomerId: selectedOption.Id,
-                ParentCustomerName: selectedOption.Name
-            }));
-        } else {
-            setContact(prevContact => ({
-                ...prevContact,
-                ParentCustomerId: "",
-                ParentCustomerName: "",
-            }));
-        }
-    };
-    const handleContactTitleChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setContact(prevContact => ({
-                ...prevContact,
-                ContactTitleId: selectedOption.Id,
-                ContactTitleName: selectedOption.Name
-            }));
-        } else {
-            setContact(prevContact => ({
-                ...prevContact,
-                ContactTitleId: "",
-                ContactTitleName: "",
-            }));
-        }
-    };
-    const handleCountryChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setContact(prevContact => ({
-                ...prevContact,
-                CountryId: selectedOption.Id,
-                CountryName: selectedOption.Name
-            }));
-            // setCityApiEndpoint(`api/search-city-by-name?countryId=${selectedOption.Id}`);
-        } else {
-            setContact(prevContact => ({
-                ...prevContact,
-                CountryId: "",
-                Country: "",
-            }));
-        }
-    };
-    const handleCityChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setContact(prevContact => ({
-                ...prevContact,
-                CityId: selectedOption.Id,
-                CityName: selectedOption.Name
-            }));
-        } else {
-            setContact(prevContact => ({
-                ...prevContact,
-                CityId: "",
-                CityName: "",
-            }));
-        }
-    };
-    const handleTownChange = (selectedOption: LookupOptionType | null) => {
-        if (selectedOption) {
-            setContact(prevContact => ({
-                ...prevContact,
-                TownId: selectedOption.Id,
-                TownName: selectedOption.Name
-            }));
-        } else {
-            setContact(prevContact => ({
-                ...prevContact,
-                TownId: "",
-                TownName: "",
-            }));
-        }
-    };
 
-    const handleSelectFieldChange = (idField: string, nameField: string) => 
+    const handleSelectFieldChange = (idField: string, nameField: string) =>
         (value: LookupOptionType | LookupOptionType[] | null) => {
-          if (Array.isArray(value)) {
-            // Çoklu seçim modunda birden fazla seçili öğe varsa
-            const selectedIds = value.map(option => option.Id).join(', ');
-            const selectedNames = value.map(option => option.Name).join(', ');
-            setContact((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
-          } else {
-            // Tekli seçim modunda
-            setContact((prev) => ({
-              ...prev,
-              [idField]: value ? value.Id : null,
-              [nameField]: value ? value.Name : '',
-            }));
-          }
+            if (Array.isArray(value)) {
+                // Çoklu seçim modunda birden fazla seçili öğe varsa
+                const selectedIds = value.map(option => option.Id).join(', ');
+                const selectedNames = value.map(option => option.Name).join(', ');
+                setContact((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+            } else {
+                // Tekli seçim modunda
+                setContact((prev) => ({
+                    ...prev,
+                    [idField]: value ? value.Id : null,
+                    [nameField]: value ? value.Name : '',
+                }));
+            }
         };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,10 +157,10 @@ const ContactsCreate: React.FC = () => {
             'MobilePhone',
             // 'Telephone',
             'EmailAddress',
-            // 'Country',
-            // 'City',
-            // 'Neighbourhood',
-            // 'Town',
+            'CountryId',
+            'CityId',
+            'NeighbourhoodId',
+            'TownId',
             // 'PostalCode',
             // 'AddressLine'
         ];
@@ -378,7 +303,7 @@ const ContactsCreate: React.FC = () => {
                                 apiEndpoint="api/search-contacttitle-by-name"
                                 label="Yetkili Unvanı"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.ContactTitleId ? { Id: contact.ContactTitleId, Name: contact.ContactTitleName } : null}
+                                selectedValue={contact.ContactTitleId ? { Id: contact.ContactTitleId, Name: contact.ContactTitleName, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('ContactTitleId', 'ContactTitleName')}
                             />
                         </Grid>
@@ -387,7 +312,7 @@ const ContactsCreate: React.FC = () => {
                                 apiEndpoint="api/search-companies-by-name"
                                 label="Firması"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.ParentCustomerId ? { Id: contact.ParentCustomerId, Name: contact.ParentCustomerName } : null}
+                                selectedValue={contact.ParentCustomerId ? { Id: contact.ParentCustomerId, Name: contact.ParentCustomerName, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('ParentCustomerId', 'ParentCustomerName')}
                                 required={true} // Alan zorunlu
                                 error={!!errors.ParentCustomerId} // Hata kontrolü
@@ -432,7 +357,7 @@ const ContactsCreate: React.FC = () => {
                                 onChange={handleInputChange}
                                 InputLabelProps={{
                                     shrink: true, // Bu satır, label'ın tarih picker'ın üstünde kalmasını sağlar.
-                                  }}
+                                }}
                             />
                         </Grid>
                     </Grid>
@@ -492,12 +417,14 @@ const ContactsCreate: React.FC = () => {
                         {/* ADRES READONLY */}
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
-
                                 apiEndpoint="api/search-country-by-name"
                                 label="Ülke"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.CountryId ? { Id: contact.CountryId, Name: contact.Country } : null}
+                                selectedValue={contact.CountryId ? { Id: contact.CountryId, Name: contact.Country, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('CountryId', 'Country')}
+                                error={!!errors.CountryId} // Hata kontrolü
+                                helperText={errors.CountryId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
                         <Grid item {...gridItemSize}>
@@ -505,61 +432,37 @@ const ContactsCreate: React.FC = () => {
                                 apiEndpoint="api/search-city-by-name"
                                 label="İl"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.CityId ? { Id: contact.CityId, Name: contact.CityName } : null}
+                                selectedValue={contact.CityId ? { Id: contact.CityId, Name: contact.CityName, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('CityId', 'CityName')}
+                                error={!!errors.CityId} // Hata kontrolü
+                                helperText={errors.CityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
-                        {/* <Grid item {...gridItemSize}>
-                            <TextField
-                                label="İl"
-                                fullWidth
-                                variant="outlined"
-                                id="City"
-                                name="City"
-                                value={contact.City}
-                                onChange={handleInputChange}
-                            />
-                        </Grid> */}
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
                                 apiEndpoint="api/search-town-by-name"
                                 label="İlçe"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.TownId ? { Id: contact.TownId, Name: contact.TownName } : null}
+                                selectedValue={contact.TownId ? { Id: contact.TownId, Name: contact.TownName, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('TownId', 'TownName')}
+                                error={!!errors.TownId} // Hata kontrolü
+                                helperText={errors.TownId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
-                        </Grid>
-                        {/* <Grid item {...gridItemSize}>
-                            <TextField
-                                label="İlçe"
-                                fullWidth
-                                variant="outlined"
-                                id="Town"
-                                name="Town"
-                                value={contact.Town}
-                                onChange={handleInputChange}
-                            />
-                        </Grid> */}
+                        </Grid> 
                         <Grid item {...gridItemSize}>
                             <GenericAutocomplete
                                 apiEndpoint="api/search-neighbourhood-by-name"
                                 label="Mahalle"
                                 getCRMData={getCRMData}
-                                selectedValue={contact.NeighbourhoodId ? { Id: contact.NeighbourhoodId, Name: contact.Neighbourhood } : null}
+                                selectedValue={contact.NeighbourhoodId ? { Id: contact.NeighbourhoodId, Name: contact.Neighbourhood, LogicalName: "" } : null}
                                 onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
+                                error={!!errors.NeighbourhoodId} // Hata kontrolü
+                                helperText={errors.NeighbourhoodId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                                required={true}
                             />
                         </Grid>
-                        {/* <Grid item {...gridItemSize}>
-                            <TextField
-                                label="Mahalle"
-                                fullWidth
-                                variant="outlined"
-                                id="Neighbourhood"
-                                name="Neighbourhood"
-                                value={contact.Neighbourhood}
-                                onChange={handleInputChange}
-                            />
-                        </Grid> */}
                         <Grid item {...gridItemSize}>
                             <TextField
                                 label="Posta Kodu"

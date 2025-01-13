@@ -5,8 +5,8 @@ import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Profile } from "../../models/Profile";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
-import GenericAutocomplete from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/Lookup";
+import {GenericAutocomplete} from "../../helper/Lookup";
+import { LookupOptionType } from "../../models/shared/Lookup";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
 import EmailIcon from '@mui/icons-material/Email';
@@ -320,7 +320,7 @@ const ProfileDetail: React.FC = () => {
                       apiEndpoint="api/search-city-by-name"
                       label="İl"
                       getCRMData={getCRMData}
-                      selectedValue={profile.City ? { Id: profile.City.Id, Name: profile.City.Name } : null}
+                      selectedValue={profile.City ? { Id: profile.City.Id, Name: profile.City.Name, LogicalName:"" } : null}
                       onValueChange={handleSelectFieldChange('Id', 'Name')}
                     />
                   </Grid>

@@ -7,6 +7,8 @@ import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Contact } from "../../models/Contact";
 import { getCRMData } from "../../requests/ApiCall";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 
 const gridItemSize = {
   xs: 12,
@@ -21,7 +23,6 @@ const ContactsDetail: React.FC = () => {
   const { id } = useParams();
   const location = useLocation();
   const stateData = location.state?.data || [];
-  console.log(stateData);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const step = ['Genel', 'İletişim', 'Adres'];
@@ -31,6 +32,7 @@ const ContactsDetail: React.FC = () => {
 
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
+  const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const getByBrand = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:
@@ -65,6 +67,7 @@ const ContactsDetail: React.FC = () => {
 
   const [contact, setContact] = useState<Contact>({
     ContactId: id || "",
+    FullName: "",
     FirstName: "",
     LastName: "",
     ContactTitleId: "",
@@ -146,14 +149,22 @@ const ContactsDetail: React.FC = () => {
     setActiveStep(0);
   };
 
-  // const switchStyles = {
-  //   '& .MuiSwitch-switchBase.Mui-checked': {
-  //     color: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.Avis,
-  //   },
-  //   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-  //     backgroundColor: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.Avis,
-  //   },
-  // };
+  const handleSelectFieldChange = (idField: string, nameField: string) =>
+    (value: LookupOptionType | LookupOptionType[] | null) => {
+        if (Array.isArray(value)) {
+            // Çoklu seçim modunda birden fazla seçili öğe varsa
+            const selectedIds = value.map(option => option.Id).join(', ');
+            const selectedNames = value.map(option => option.Name).join(', ');
+            setContact((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+        } else {
+            // Tekli seçim modunda
+            setContact((prev) => ({
+                ...prev,
+                [idField]: value ? value.Id : null,
+                [nameField]: value ? value.Name : '',
+            }));
+        }
+    };
 
   //If companyType is contact
   const getStepContactContent = (step: number) => {
@@ -272,7 +283,7 @@ const ContactsDetail: React.FC = () => {
                 variant="outlined"
                 id="BirthDate"
                 name="BirthDate"
-                value={contact.BirthDate?contact.BirthDate.toLocaleDateString():""}
+                value={contact.BirthDate ? contact.BirthDate.toLocaleDateString() : ""}
                 onChange={handleInputChange}
                 InputProps={{
                   readOnly: true,
@@ -366,64 +377,56 @@ const ContactsDetail: React.FC = () => {
 
             {/* ADRES READONLY */}
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-country-by-name"
                 label="Ülke"
-                fullWidth
-                variant="outlined"
-                id="Country"
-                name="Country"
-                value={contact.Country}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={contact.CountryId ? { Id: contact.CountryId, Name: contact.Country, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange('CountryId', 'Country')}
+                error={!!errors.CountryId} // Hata kontrolü
+                helperText={errors.CountryId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-city-by-name"
                 label="İl"
-                fullWidth
-                variant="outlined"
-                id="City"
-                name="City"
-                value={contact.City}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={contact.CityId ? { Id: contact.CityId, Name: contact.CityName, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange('CityId', 'CityName')}
+                error={!!errors.CityId} // Hata kontrolü
+                helperText={errors.CityId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
               />
             </Grid>
             <Grid item {...gridItemSize}>
-              <TextField
+              <GenericAutocomplete
+                apiEndpoint="api/search-town-by-name"
                 label="İlçe"
-                fullWidth
-                variant="outlined"
-                id="Town"
-                name="Town"
-                value={contact.Town}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
+                getCRMData={getCRMData}
+                selectedValue={contact.TownId ? { Id: contact.TownId, Name: contact.TownName, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange('TownId', 'TownName')}
+                error={!!errors.TownId} // Hata kontrolü
+                helperText={errors.TownId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-neighbourhood-by-name"
+                label="Mahalle"
+                getCRMData={getCRMData}
+                selectedValue={contact.NeighbourhoodId ? { Id: contact.NeighbourhoodId, Name: contact.Neighbourhood, LogicalName: "" } : null}
+                onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
+                error={!!errors.NeighbourhoodId} // Hata kontrolü
+                helperText={errors.NeighbourhoodId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                required={true}
               />
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
-                label="Mahalle"
-                fullWidth
-                variant="outlined"
-                id="Neighbourhood"
-                name="Neighbourhood"
-                value={contact.Neighbourhood}
-                // onChange={handleInputChange}
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <TextField
-                label="Mahalle"
+                label="Posta Kodu"
                 fullWidth
                 variant="outlined"
                 id="PostalCode"
