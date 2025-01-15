@@ -39,8 +39,8 @@ const EmailsCreate: React.FC = () => {
   const location = useLocation();
   const stateData = location.state?.data || [];
   const user = {
-    Id: localStorage.getItem("crmuserid"),
-    Name: localStorage.getItem("crmusername"),
+    Id: sessionStorage.getItem("crmuserid"),
+    Name: sessionStorage.getItem("crmusername"),
   };
   console.log(stateData);
   const steps = [""];

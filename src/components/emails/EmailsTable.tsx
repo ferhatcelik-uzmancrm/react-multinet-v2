@@ -109,9 +109,9 @@ export default function EmailsTable() {
   };
 
   const emailRequest = useMemo(() => ({
-    UserId: localStorage.getItem("userid")?.toString() || "",
-    CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-    UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+    UserId: sessionStorage.getItem("userid")?.toString() || "",
+    CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+    UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
     Name: ""
   }), []);
 
@@ -119,7 +119,7 @@ export default function EmailsTable() {
     const fetchData = async () => {
       try {
         const response = await getCRMData('api/get-emails', emailRequest);
-        setEmails(response.data);
+        setEmails(response.data.Data);
       } catch (error) {
         alert(error);
       }

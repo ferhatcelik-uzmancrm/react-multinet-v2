@@ -91,9 +91,9 @@ export default function InterestedProductsTable() {
     const totalPages = interestedproducts ? Math.ceil(interestedproducts.length / itemsPerPage) : 0;
 
     const interestedProductRequest = useMemo(() => ({
-        UserId: localStorage.getItem("userid")?.toString() || "",
-        CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-        UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+        UserId: sessionStorage.getItem("userid")?.toString() || "",
+        CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+        UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
         Name: ""
     }), []);
 

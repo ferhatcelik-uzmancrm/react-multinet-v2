@@ -109,9 +109,9 @@ export default function LeadsTable() {
   };
 
   const leadRequest = useMemo(() => ({
-    userid: localStorage.getItem("userid")?.toString() || "",
-    crmuserid: localStorage.getItem("crmuserid")?.toString() || "",
-    usercityid: localStorage.getItem("crmusercityid")?.toString() || "",
+    userid: sessionStorage.getItem("userid")?.toString() || "",
+    crmuserid: sessionStorage.getItem("crmuserid")?.toString() || "",
+    usercityid: sessionStorage.getItem("crmusercityid")?.toString() || "",
     new_taxnumber: "",
     name: ""
   }), []);

@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Auth from "./auth/Auth";
 import { AppContextProvider } from "./contexts/AppContext";
 import { useAuth } from "./contexts/AuthContext";
 import Navbar from "./layout/Navbar";
 import Sidebar from "./layout/Sidebar";
-// import Footer from './layout/Footer';
 
 const App: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, checkAuthStatus} = useAuth();
+
+  useEffect(() => {
+    checkAuthStatus(); // Uygulama yüklendiğinde oturum durumu kontrol edilir
+  }, []);
 
   return (
     <>
@@ -15,7 +18,6 @@ const App: React.FC = () => {
         <AppContextProvider>
           <Navbar />
           <Sidebar />
-          {/* <Footer /> */}
         </AppContextProvider>
       ) : (
         <Auth />

@@ -62,55 +62,6 @@ const Dashboard = () => {
     }
   };
   const { image1, image2, image3, image4 } = getBrandDetails();
-
-  // const taskInitData: Task[] = [
-  //   {
-  //     owner: "",
-  //     priority: 1,
-  //     subject: "McLaren",
-  //   },
-  //   {
-  //     owner: "",
-  //     priority: 1,
-  //     subject: "March",
-  //   },
-  //   {
-  //     owner: "",
-  //     priority: 1,
-  //     subject: "Ferrari",
-  //   },
-  //   {
-  //     owner: "",
-  //     priority: 1,
-  //     subject: "Aston Martin",
-  //   },
-  //   {
-  //     owner: "",
-  //     priority: 1,
-  //     subject: "Mercedes",
-  //   },
-  // ];
-
-  // const [tasks, setTasks] = useState<Task[]>(taskInitData);
-
-  // const navigate = useNavigate();
-  // const sendTask = () => {
-  //   // navigate("/tasks");
-  // };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await fetchUserData('get-task', '');
-  //       setTasks(response.data)
-  //     } catch (error) {
-  //       alert(error)
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
-
   return (
     <Grid container spacing={2} sx={{ justifyContent: "center" }}>
       <Grid item xs={12} sm={6} md={4} lg={3}>

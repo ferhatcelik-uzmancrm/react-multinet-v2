@@ -56,9 +56,9 @@ const Navbar = () => {
     navigate("/profile");
   };
   // const { user } = useAuth()  //Get user infos for shown
-  // console.log(localStorage.getItem("username"));  //Get user infos from cache for shown
+  // console.log(sessionStorage.getItem("username"));  //Get user infos from cache for shown
 
-  var currentUser = localStorage.getItem("crmusername");
+  var currentUser = sessionStorage.getItem("crmusername");
 
   // switch (currentUser) {
   //   case "ahmetemins":

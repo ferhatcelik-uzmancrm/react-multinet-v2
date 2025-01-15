@@ -147,7 +147,7 @@ function Row(props: { row: ReturnType<typeof createData> }) {
   );
 }
 
-const taskUser = localStorage.getItem("username");
+const taskUser = sessionStorage.getItem("username");
 
 const rows = [
   createData("McLaren", taskUser || "", 1),

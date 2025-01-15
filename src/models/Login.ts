@@ -1,6 +1,7 @@
 export type LoginRequestModel = {
   username: string;
   password: string;
+  captchaToken?: string;
 };
 
 export type UserModel = {

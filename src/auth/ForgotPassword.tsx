@@ -9,7 +9,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ForgotPasswordRequestModel } from "../models/Login";
 import { sendRequest } from "../requests/ApiCall";
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,16 @@ import InputAdornment from '@mui/material/InputAdornment';
 import FormControl from '@mui/material/FormControl';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import FormHelperText from '@mui/material/FormHelperText';
+
+// Password validation interface
+interface PasswordValidation {
+  hasMinLength: boolean;
+  hasUpperCase: boolean;
+  hasLowerCase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+}
 
 function Copyright(props: any) {
   return (
@@ -40,7 +50,6 @@ function Copyright(props: any) {
   );
 }
 
-
 const defaultTheme = createTheme({
   palette: {
     primary: {
@@ -57,14 +66,19 @@ const ForgotPassword = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
-  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
-  const handleMouseUpPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
+  // Password validation state
+  const [validation, setValidation] = useState<PasswordValidation>({
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
   const [alertState, setAlertState] = useState({
     message: '',
     type: 'success' as 'success' | 'danger',
@@ -73,57 +87,89 @@ const ForgotPassword = () => {
     isOpen: false,
   });
 
-  const closeAlert = () => {
-    setAlertState((prevState) => ({ ...prevState, isOpen: false }));
-  };
-
   const [formData, setFormData] = useState<ForgotPasswordRequestModel>({
     email: "",
     password: "",
   });
 
-  const [showAlert, setShowAlert] = useState(false);
-  // const [alert, setAlert] = useState(String);
-  const [loading, setLoading] = useState(Boolean);
+  const [loading, setLoading] = useState(false);
 
+  // Password validation function
+  const validatePassword = (password: string) => {
+    setValidation({
+      hasMinLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasLowerCase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    });
+  };
+
+  // Check if all password requirements are met
+  const isPasswordValid = () => {
+    return Object.values(validation).every(value => value === true);
+  };
+
+  // Check if passwords match when either password or confirm password changes
+  useEffect(() => {
+    setPasswordsMatch(formData.password === confirmPassword);
+  }, [formData.password, confirmPassword]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    if (name === 'password') {
+      validatePassword(value);
+    }
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
     }));
   };
 
+  const handleConfirmPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(event.target.value);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true)
+
+    if (!isPasswordValid()) {
+      setAlertState({
+        message: "Please ensure your password meets all requirements.",
+        type: 'danger',
+        position: 'bottom-right',
+        showProgress: true,
+        isOpen: true,
+      });
+      return;
+    }
+
+    if (!passwordsMatch) {
+      setAlertState({
+        message: "Passwords do not match.",
+        type: 'danger',
+        position: 'bottom-right',
+        showProgress: true,
+        isOpen: true,
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      await sendRequest("api/user/forgot-password", formData)
-        .then(response => {
-          setAlertState({
-            message: "Password updated successfully!",
-            type: 'success',
-            position: 'bottom-right',
-            showProgress: true,
-            isOpen: true,
-          });
-          setTimeout(() => {
-            setAlertState((prevState) => ({ ...prevState, isOpen: false }));
-            navigate('/*');
-          }, 3000); // 3 saniye bekletme
-
-        })
-        .catch(error => {
-          setAlertState({
-            message: "User Not Found. Please try again.",
-            type: 'danger',
-            position: 'bottom-right',
-            showProgress: true,
-            isOpen: true,
-          });
-        });
+      await sendRequest("api/user/forgot-password", formData);
+      setAlertState({
+        message: "Password updated successfully!",
+        type: 'success',
+        position: 'bottom-right',
+        showProgress: true,
+        isOpen: true,
+      });
+      setTimeout(() => {
+        setAlertState((prevState) => ({ ...prevState, isOpen: false }));
+        navigate('/*');
+      }, 3000);
     } catch (error) {
       console.error("Error:", error);
       setAlertState({
@@ -133,9 +179,16 @@ const ForgotPassword = () => {
         showProgress: true,
         isOpen: true,
       });
+    } finally {
+      setLoading(false);
     }
-    finally {
-      setLoading(false)
+  };
+
+  const togglePassword = (field: 'password' | 'confirmPassword') => {
+    if (field === 'password') {
+      setShowPassword(!showPassword);
+    } else {
+      setShowConfirmPassword(!showConfirmPassword);
     }
   };
 
@@ -152,16 +205,14 @@ const ForgotPassword = () => {
         display: 'block',
       }}
     >
-      {/* CUSTOM ALERT */}
       <AlertComponent
         message={alertState.message}
         type={alertState.type}
         position={alertState.position}
         showProgress={alertState.showProgress}
         isOpen={alertState.isOpen}
-        onClose={closeAlert}
+        onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
       />
-      {/* CUSTOM ALERT */}
       <ThemeProvider theme={defaultTheme}>
         <Container component="main" maxWidth="xs">
           <CssBaseline />
@@ -180,18 +231,6 @@ const ForgotPassword = () => {
               width={isMobile ? 340 : 400}
               m={4}
             />
-            {showAlert && (
-              <Box
-                sx={{
-                  width: "100%",
-                  mt: 2,
-                }}
-              >
-                <Alert severity="error" onClose={() => setShowAlert(false)}>
-                  Kullanıcı adı veya şifre yanlış.
-                </Alert>
-              </Box>
-            )}
             <Box
               component="form"
               onSubmit={handleSubmit}
@@ -209,29 +248,64 @@ const ForgotPassword = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 variant="standard"
-                sx={{
-                  mt: 3,
-                }}
+                sx={{ mt: 3 }}
               />
-              <FormControl fullWidth required sx={{ mt: 3,}} variant="standard">
+              
+              <FormControl fullWidth required sx={{ mt: 3 }} variant="standard" error={!isPasswordValid()}>
                 <InputLabel htmlFor="password">New Password</InputLabel>
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleInputChange}
                   endAdornment={
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
-                        onMouseUp={handleMouseUpPassword}
+                        onClick={() => togglePassword('password')}
+                        edge="end"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   }
                 />
+                <FormHelperText>
+                  {!validation.hasMinLength && "• Minimum 8 characters"}
+                  {!validation.hasUpperCase && <br />}
+                  {!validation.hasUpperCase && "• At least one uppercase letter"}
+                  {!validation.hasLowerCase && <br />}
+                  {!validation.hasLowerCase && "• At least one lowercase letter"}
+                  {!validation.hasNumber && <br />}
+                  {!validation.hasNumber && "• At least one number"}
+                  {!validation.hasSpecialChar && <br />}
+                  {!validation.hasSpecialChar && "• At least one special character"}
+                </FormHelperText>
               </FormControl>
+
+              <FormControl fullWidth required sx={{ mt: 3 }} variant="standard" error={!passwordsMatch}>
+                <InputLabel htmlFor="confirmPassword">Confirm Password</InputLabel>
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => togglePassword('confirmPassword')}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+                {!passwordsMatch && (
+                  <FormHelperText>Passwords do not match</FormHelperText>
+                )}
+              </FormControl>
+
               <Button
                 type="submit"
                 fullWidth
@@ -248,7 +322,7 @@ const ForgotPassword = () => {
                     backgroundColor: "#f7a724",
                   },
                 }}
-                disabled={loading}
+                disabled={loading || !isPasswordValid() || !passwordsMatch}
               >
                 Gönder
               </Button>
@@ -257,20 +331,12 @@ const ForgotPassword = () => {
                   <LinearProgress />
                 </Box>
               )}
-              <Grid container>
-                <Grid item xs>
-                  {/* <Link href="#" variant="body2">
-                  Şifremi unuttum
-                </Link> */}
-                </Grid>
-              </Grid>
             </Box>
           </Box>
           <Copyright sx={{ mt: 8, mb: 4 }} />
         </Container>
       </ThemeProvider>
     </Container>
-
   );
 };
 

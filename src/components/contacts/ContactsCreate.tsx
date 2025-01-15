@@ -42,7 +42,7 @@ const ContactsCreate: React.FC = () => {
     const [skipped, setSkipped] = React.useState(new Set<number>());
     // const [cityApiEndpoint, setCityApiEndpoint] = useState('api/search-city-by-name');
     // const [cityApiEndpoint, setCityApiEndpoint] = useState('api/search-city-by-name');
-    var crmOwner = localStorage.getItem("crmuserid");
+    var crmOwner = sessionStorage.getItem("crmuserid");
 
     const getByBrand = () => {
         switch (selectedBrand) {

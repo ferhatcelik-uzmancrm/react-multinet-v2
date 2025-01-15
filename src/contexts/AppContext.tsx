@@ -38,7 +38,7 @@ export const AppContextProvider = ({
   const [isAccount, setIsAccount] = useState(false); //Check company detail is 'Contact' or 'Account' then show-hide fields by
 
   useEffect(() => {
-    const brand = localStorage.getItem("brand");
+    const brand = sessionStorage.getItem("brand");
     switch (brand) {
       case "Multinet":
         setSelectedBrand(BrandOptions.Multinet);

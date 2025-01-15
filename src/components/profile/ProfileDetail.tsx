@@ -41,7 +41,7 @@ const ProfileDetail: React.FC = () => {
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   console.log(setActiveStep);
-  const currentUserId = localStorage.getItem("portaluserid");
+  const currentUserId = sessionStorage.getItem("portaluserid");
   const getByBrand = () => {
     switch (selectedBrand) {
       default:

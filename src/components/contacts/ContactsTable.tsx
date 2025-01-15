@@ -13,8 +13,6 @@ import Link from "@mui/joy/Link";
 import Modal from "@mui/joy/Modal";
 import ModalClose from "@mui/joy/ModalClose";
 import ModalDialog from "@mui/joy/ModalDialog";
-import Option from "@mui/joy/Option";
-import Select from "@mui/joy/Select";
 import Sheet from "@mui/joy/Sheet";
 import Table from "@mui/joy/Table";
 import Typography from "@mui/joy/Typography";
@@ -101,9 +99,9 @@ export default function ContactsTable() {
   };
 
   const contactRequest = useMemo(() => ({
-    UserId: localStorage.getItem("userid")?.toString() || "",
-    CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-    UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+    UserId: sessionStorage.getItem("userid")?.toString() || "",
+    CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+    UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
     Name: "",
     MobilePhone: "",
     OwnerId: "",
@@ -173,31 +171,12 @@ export default function ContactsTable() {
   const renderFilters = () => (
     <React.Fragment>
       <FormControl size="sm">
-        {/* <FormLabel>Durum</FormLabel>
-        <Select
-          size="md"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
-        >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select> */}
       </FormControl>
 
       <FormControl size="sm">
-        {/* <FormLabel>Kategori</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
       </FormControl>
 
       <FormControl size="sm">
-        {/* <FormLabel>Müşteri</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
       </FormControl>
     </React.Fragment>
   );

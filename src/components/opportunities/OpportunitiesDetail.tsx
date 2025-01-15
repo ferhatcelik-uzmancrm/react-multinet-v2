@@ -44,8 +44,8 @@ const OpportunitiesDetail: React.FC = () => {
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
-  // var ownerName = localStorage.getItem("username");
-  var crmOwner = localStorage.getItem("crmuserid");
+  // var ownerName = sessionStorage.getItem("username");
+  var crmOwner = sessionStorage.getItem("crmuserid");
   const getByBrand = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:

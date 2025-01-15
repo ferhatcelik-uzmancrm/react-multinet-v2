@@ -8,15 +8,17 @@ import React, {
   useState,
 } from "react";
 import { LoginRequestModel, UserModel } from "../models/Login";
-import { loginRequest } from "../requests/ApiCall";
+import { getCRMData, getData, loginRequest } from "../requests/ApiCall";
 import Spinner from "../widgets/Spinner";
+import Cookies from "js-cookie";
 
 type AuthContextData = {
   isAuthenticated: boolean;
-  login: (loginData: LoginRequestModel) => void;
+  login: (loginData: LoginRequestModel) => Promise<boolean>;
   logout: () => void;
   currentUser: UserModel | undefined;
   setCurrentUser: Dispatch<SetStateAction<UserModel | undefined>>;
+  checkAuthStatus: () => Promise<void>; // checkAuthStatus metodu eklendi
 };
 
 const AuthContext = createContext<AuthContextData | null>(null);
@@ -38,50 +40,79 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   const setAuthStatus = (status: boolean) => {
-    localStorage.setItem("isAuthenticated", status.toString());
+    sessionStorage.setItem("isAuthenticated", status.toString());
   };
 
-  const checkAuthStatus = () => {
-    const authStatus = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(authStatus === "true");
-    setLoading(false);
+  // const checkAuthStatus = () => {
+  //   const authStatus = sessionStorage.getItem("isAuthenticated");
+  //   setIsAuthenticated(authStatus === "true");
+  //   setLoading(false);
+  // };
+  const checkAuthStatus = async () => {
+    try {
+      const response = await getData("api/user/verify-token");
+      if (response.data.Success){
+        setIsAuthenticated(response.data.Success);
+      }   
+      setLoading(false);  
+    } catch (error) {
+      console.error("Authentication validation failed:", error);
+      setIsAuthenticated(false);
+      setLoading(false);
+    }
   };
 
-  const login = async (loginData: LoginRequestModel) => {
+  const login = async (loginData: LoginRequestModel): Promise<boolean> => {
     try {
       const response = await loginRequest("api/user/login", loginData);
-      if (response.data.Token) {
+      if (response.data.Success) {
         setIsAuthenticated(true);
         setAuthStatus(true);
         setLastActivity(Date.now());
-        setCurrentUser({
-          brand: response.data.CRMUserName,
-          brandid: "",
-          user: response.data.UserName,
-          userid: response.data.CRMUserId,
-          cityid: response.data.CRMUserCityId,
-          cityname: response.data.CRMUserCityName
-        });
-        localStorage.setItem("token", response.data.Token); // Store token
-        localStorage.setItem("username", response.data.UserName);
-        localStorage.setItem("crmusername", response.data.CRMUserName);
-        localStorage.setItem("crmuserid", response.data.CRMUserId);
-        localStorage.setItem("crmusercityid", response.data.CRMUserCityId);
-        localStorage.setItem("portaluserid", response.data.PortalUserId);
-        // localStorage.setItem("userid", ""); // Add if userId is returned
-        // localStorage.setItem("brand", ""); // Add if brand is returned
-        // localStorage.setItem("brandid", ""); // Add if brandId is returned
+
+        const userInfo = Cookies.get("userInfo");
+        if (userInfo) {
+          const [portalUserId, username, crmUserId, crmUserName, crmCityId, crmUserCityName] =
+            userInfo.split("|");
+
+          setCurrentUser({
+            brand: crmUserName,
+            brandid: "",
+            user: username,
+            userid: crmUserId,
+            cityid: crmCityId,
+            cityname: crmUserCityName,
+          });
+
+          sessionStorage.setItem("username", username);
+          sessionStorage.setItem("crmusername", crmUserName);
+          sessionStorage.setItem("crmuserid", crmUserId);
+          sessionStorage.setItem("crmusercityid",crmCityId);
+          sessionStorage.setItem("portaluserid",portalUserId);
+        }
+        return true;
       }
     } catch (error) {
       setIsAuthenticated(false);
       console.log(error);
     }
+    return false;
   };
 
-  const logout = () => {
-    localStorage.clear();
-    setIsAuthenticated(false);
-    setAuthStatus(false);
+  const logout = async () => {
+    try {
+      const response = await getCRMData("api/user/logout",null);
+      if (response.data.Success) {
+        sessionStorage.clear();
+        setIsAuthenticated(false);
+        setAuthStatus(false);
+        // Redirect to login or home page
+        window.location.href = "/login";
+      } 
+    } catch (error) {
+      setIsAuthenticated(false);
+      console.log(error);
+    }
   };
 
   useEffect(() => {
@@ -114,7 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     <Spinner type="hash" size={50} color="#d0052d" />
   ) : (
     <AuthContext.Provider
-      value={{ isAuthenticated, setCurrentUser, currentUser, login, logout }}
+      value={{ isAuthenticated, setCurrentUser, currentUser, login, logout,checkAuthStatus }}
     >
       {children}
     </AuthContext.Provider>

@@ -39,9 +39,9 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   };
   // useMemo to define requestParams with static fields and dynamic 'Name'
   const requestParams = useMemo(() => ({
-    UserId: localStorage.getItem("userid")?.toString() || "",
-    CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-    UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+    UserId: sessionStorage.getItem("userid")?.toString() || "",
+    CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+    UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
     Name: ""
   }), []);
 
@@ -156,9 +156,9 @@ export default GenericAutocomplete;
 //   };
 
 //   const requestParams = useMemo(() => ({
-//     UserId: localStorage.getItem("userid")?.toString() || "",
-//     CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-//     UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+//     UserId: sessionStorage.getItem("userid")?.toString() || "",
+//     CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+//     UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
 //     Name: ""
 //   }), []);
 
@@ -283,9 +283,9 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   };
 
   const requestParams = useMemo(() => ({
-    UserId: localStorage.getItem("userid")?.toString() || "",
-    CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-    UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+    UserId: sessionStorage.getItem("userid")?.toString() || "",
+    CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+    UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
     Name: "",
     Filter: filterParams ? filterParams : {} // Filter null gelmesini engeller, boş nesne gönderir.
   }), [filterParams]);
@@ -418,9 +418,9 @@ const OptionSet: React.FC<OptionSetProps> = ({
 
   const requestParams = useMemo(
     () => ({
-      UserId: localStorage.getItem("userid")?.toString() || "",
-      CrmUserId: localStorage.getItem("crmuserid")?.toString() || "",
-      UserCityId: localStorage.getItem("crmusercityid")?.toString() || "",
+      UserId: sessionStorage.getItem("userid")?.toString() || "",
+      CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+      UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
       Name: inputValue,
       Filter: filterParams ? filterParams : {}, // Filter null gelmesini engeller, boş nesne gönderir.
     }),

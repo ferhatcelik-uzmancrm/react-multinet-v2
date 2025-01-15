@@ -120,7 +120,7 @@ const Sidebar = () => {
   const [selectedText, setSelectedText] = useState("");
   // const { selectedBrand } = useAppContext();
   const [activitiesOpen, setActivitiesOpen] = useState(false);
-  const storedItem = localStorage.getItem("selectedSidebarItem");
+  const storedItem = sessionStorage.getItem("selectedSidebarItem");
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -132,7 +132,7 @@ const Sidebar = () => {
   const handleListItemClick = (path: string, text: string) => {
     setSelectedItem(path);
     setSelectedText(text);
-    localStorage.setItem("selectedSidebarItem", JSON.stringify({ path, text }));
+    sessionStorage.setItem("selectedSidebarItem", JSON.stringify({ path, text }));
   };
 
   useEffect(() => {

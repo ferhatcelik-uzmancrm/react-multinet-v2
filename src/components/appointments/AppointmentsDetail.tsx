@@ -51,7 +51,7 @@ const AppointmentsDetail: React.FC = () => {
   };
 
   // const [currentLocation, setCurrentLocation] = useState(center);
-  // var ownerName = localStorage.getItem("username");
+  // var ownerName = sessionStorage.getItem("username");
   const getByBrand = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:

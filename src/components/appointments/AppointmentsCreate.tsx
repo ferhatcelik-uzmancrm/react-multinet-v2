@@ -25,7 +25,6 @@ type Location = {
 
 const AppointmentsCreate: React.FC = () => {
     const { selectedBrand, currentDate, currentTime } = useAppContext();
-    // const { id } = useParams();
     const location = useLocation();
     const stateData = location.state?.data || [];
     console.log(stateData);
@@ -46,8 +45,6 @@ const AppointmentsCreate: React.FC = () => {
     const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
     const [activeStep, setActiveStep] = React.useState(0);
     const [skipped, setSkipped] = React.useState(new Set<number>());
-    // var ownerName = localStorage.getItem("username");
-    // var crmOwner = localStorage.getItem("crmuserid");
 
     const getByBrand = () => {
         switch (selectedBrand) {
@@ -142,10 +139,6 @@ const AppointmentsCreate: React.FC = () => {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-
-        // const jsonString = JSON.stringify(value);
-        // console.log(value);
-        // console.log(jsonString);
         setAppointment((prevLead) => ({
             ...prevLead,
             [name]: value,
@@ -230,7 +223,6 @@ const AppointmentsCreate: React.FC = () => {
             setLoading(false)
         }
 
-        // window.location.reload();
     };
 
     const isStepSkipped = (step: number) => {
@@ -276,7 +268,6 @@ const AppointmentsCreate: React.FC = () => {
                 ...appointment,
                 CheckIn: location.lat + ", " + location.lng,
                 ScheduledStart: new Date(),
-                // ScheduledStart: new Date().toISOString().slice(0, 16),
             });
         });
     }
@@ -286,7 +277,6 @@ const AppointmentsCreate: React.FC = () => {
                 ...appointment,
                 CheckOut: location.lat + ", " + location.lng,
                 ScheduledEnd: new Date(),
-                // ScheduledEnd: new Date().toISOString().slice(0, 16),
             });
         });
     }
@@ -309,8 +299,7 @@ const AppointmentsCreate: React.FC = () => {
                                     readOnly: true, // Setting the field as read-only
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            {/* <IconButton aria-label="Check In" onClick={handleCheckIn} disabled={isCheckInDisabled}> */}
-                                            {/* <CheckCircle color={isCheckInDisabled ? 'disabled' : 'primary'} /> */}
+    
                                             <IconButton aria-label="Check In"
                                                 sx={{
                                                     transition: 'color 0.3s',
@@ -331,7 +320,6 @@ const AppointmentsCreate: React.FC = () => {
                                                     },
                                                 }}
                                                 onClick={handleCheckIn}
-                                            // disabled={isCheckInDisabled}
                                             >
                                                 <PersonPinCircleTwoTone />
                                             </IconButton>
@@ -352,8 +340,7 @@ const AppointmentsCreate: React.FC = () => {
                                     readOnly: true, // Setting the field as read-only
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            {/* <IconButton aria-label="Check In" onClick={handleCheckIn} disabled={isCheckInDisabled}> */}
-                                            {/* <CheckCircle color={isCheckInDisabled ? 'disabled' : 'primary'} /> */}
+                                 
                                             <IconButton aria-label="Check In"
                                                 sx={{
                                                     transition: 'color 0.3s',
@@ -447,34 +434,7 @@ const AppointmentsCreate: React.FC = () => {
                                 onChange={handleInputChange}
                             />
                         </Grid>
-                        {/* <Grid item {...gridItemSize}>
-                    <Autocomplete
-                      multiple
-                      id="company"
-                      className="company"
-                      fullWidth
-                      options={appointment.RegardingObjectId?.Name}
-                      getOptionLabel={(option) => option.name}
-                      value={appointment.RegardingObjectId?.Id}
-                      onChange={handleCompanyChange}
-                      // renderOption={(props, option, { selected }) => (
-                      //   <li {...props} style={{ fontWeight: selected ? 'bold' : 'normal' }}>
-                      //     {option.name}
-                      //   </li>
-                      // )}
-                      renderInput={(params) => (
-                        <TextField {...params} label="Firma" />
-                      )}
-                      limitTags={1}
-                      readOnly
-                      sx={{
-                        '& .MuiAutocomplete-tag': {
-                          fontWeight: 'bold',
-                          color: 'GrayText'
-                        },
-                      }}
-                    />
-                  </Grid> */}
+                        
                     </Grid >
                 );
             case 1:
@@ -581,18 +541,7 @@ const AppointmentsCreate: React.FC = () => {
                             />
                         </Grid>
 
-                        {/* <Grid item xs={12}>
-                    <TextField
-                      label="Açıklama"
-                      fullWidth
-                      multiline
-                      rows={4}
-                      variant="outlined"
-                      name="description"
-                      value={appointment.description}
-                      onChange={handleInputChange}
-                    />
-                  </Grid> */}
+                        
                     </Grid>
                 );
             default:

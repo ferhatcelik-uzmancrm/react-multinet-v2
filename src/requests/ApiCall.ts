@@ -1,10 +1,8 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { ForgotPasswordRequestModel, LoginRequestModel } from "../models/Login";
+import Cookies from "js-cookie";
 
-// const NET_URL = "http://localhost:60871";  //.NET WebAPI LOCAL
-// const FASTAPI_URL = "http://127.0.0.1:8000";  //Python FastAPI LOCAL
-// const NET_URL = process.env.REACT_APP_NET_URL || "http://193.243.195.51:9090";
-// const NET_URL = "https://localhost:44366/api";
+
 const FASTAPI_URL = "https://oto_service-1-q9834787.deta.app";
 const CRM_API_URL = "https://localhost:44366";
 // const CRM_API_URL = "https://uzmandemo.com:1228/MultinetApi";
@@ -14,13 +12,12 @@ const apiService = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
 apiService.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    // console.log("Token: ", token);
+    const token = Cookies.get("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -48,7 +45,6 @@ export const loginRequest = async (
 ): Promise<AxiosResponse> => {
   try {
     const response = await apiService.post(`${CRM_API_URL}/${url}`, loginModel);
-    console.log("Response: ", response);
     return response;
   } catch (error) {
     throw handleApiError(error as AxiosError);
@@ -61,7 +57,6 @@ export const forgotPassword = async (
 ): Promise<AxiosResponse> => {
   try {
     const response = await apiService.post(`${CRM_API_URL}/${url}`, reuestModel);
-    console.log("Response: ", response);
     return response;
   } catch (error) {
     throw handleApiError(error as AxiosError);
@@ -69,11 +64,10 @@ export const forgotPassword = async (
 };
 
 export const getData = async (
-  url: string,
-  params: any
+  url: string
 ): Promise<AxiosResponse> => {
   try {
-    const response = await apiService.post(`${FASTAPI_URL}/${url}`, params);
+    const response = await apiService.get(`${CRM_API_URL}/${url}`);
     return response;
   } catch (error) {
     throw handleApiError(error as AxiosError);
@@ -109,7 +103,6 @@ export const fetchCRMUserData = async (
   userId: string
 ): Promise<AxiosResponse> => {
   try {
-    console.log("URL: ", `${CRM_API_URL}/${url}/${userId}`);
     const response = await apiService.get(`${CRM_API_URL}/${url}/${userId}`);
     return response;
   } catch (error) {
@@ -132,14 +125,5 @@ export const sendRequest = async (
     throw handleApiError(error as AxiosError);
   }
 };
-
-// export const createPost = async (post: any): Promise<AxiosResponse> => {
-//   try {
-//     const response = await apiService.post("/posts", post);
-//     return response;
-//   } catch (error) {
-//     throw handleApiError(error as AxiosError);
-//   }
-// };
 
 export default apiService;
