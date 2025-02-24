@@ -50,8 +50,7 @@ const AppointmentsDetail: React.FC = () => {
     setAlertState((prevState) => ({ ...prevState, isOpen: false }));
   };
 
-  // const [currentLocation, setCurrentLocation] = useState(center);
-  // var ownerName = sessionStorage.getItem("username");
+
   const getByBrand = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:

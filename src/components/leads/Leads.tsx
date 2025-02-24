@@ -3,7 +3,7 @@ import LeadsCreate from "./LeadsCreate";
 import LeadsDetail from "./LeadsDetail";
 import LeadsTable from "./LeadsTable";
 
-const Contacts: React.FC = () => {
+const Leads: React.FC = () => {
   return (
     <Routes>
       <Route path="/*" element={<LeadsTable />} />
@@ -13,4 +13,4 @@ const Contacts: React.FC = () => {
   );
 };
 
-export default Contacts;
+export default Leads;

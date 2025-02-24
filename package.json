@@ -8,6 +8,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@google-cloud/recaptcha-enterprise": "^5.13.0",
     "@mui/base": "^5.0.0-beta.59",
     "@mui/icons-material": "^5.14.1",
     "@mui/joy": "^5.0.0-beta.0",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^18.2.7",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.4.0",
+    "compression-webpack-plugin": "^10.0.0",
     "css-select": "^5.1.0",
     "dotenv": "^16.3.1",
     "js-cookie": "^3.0.5",
@@ -40,20 +42,23 @@
     "postcss": "^8.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^5.0.0",
     "react-google-recaptcha": "^3.1.0",
     "react-material-ui-carousel": "^3.4.2",
     "react-router-dom": "^6.14.2",
     "react-scripts": "5.0.1",
     "react-spinners": "^0.13.8",
+    "redux-devtools-extension": "^2.13.9",
     "resolve-url-loader": "^5.0.0",
     "svgo": "^3.3.2",
+    "terser-webpack-plugin": "^5.3.9",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "set HTTPS=true&&react-scripts start",
-    "build": "react-scripts build",
+    "build": "set \"GENERATE_SOURCEMAP=false\" && react-scripts build && node scripts/optimize.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -80,7 +85,10 @@
     "@types/js-cookie": "^3.0.6",
     "@types/papaparse": "^5.3.7",
     "@types/react-google-recaptcha": "^2.1.9",
-    "@types/xlsx": "^0.0.36"
-  },
-  "proxy": "http://localhost:3000"
+    "@types/xlsx": "^0.0.36",
+    "cross-env": "^7.0.3",
+    "javascript-obfuscator": "^4.1.1",
+    "terser": "^5.19.2",
+    "uglify-js": "^3.17.4"
+  }
 }

@@ -169,8 +169,7 @@ const InterestedProductsCreate: React.FC = () => {
         try {
             await sendRequest("api/upsert-interestedproduct", interestedProduct)
                 .then(response => {
-                    // console.log("Interested product created:", response.data)
-                    const createdId = response.data?.InterestedProductId; // ID'yi buradan alıyoruz (servis response modeline göre uyarlayın)
+                    const createdId = response.data?.InterestedProductId; 
                     if (createdId) {
                         navigate(`/interestedproducts/detail/${createdId}`);
                     }

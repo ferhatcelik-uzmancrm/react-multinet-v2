@@ -158,7 +158,7 @@ const rows = [
   createData("Red Bull Racing", "Max Verstappen", 4),
 ];
 
-export const Tasks = () => {
+const Tasks: React.FC = () => {
   const { selectedBrand } = useAppContext(); //Get selected brand
   const [open, setOpen] = useState<boolean>(false);
 
@@ -360,3 +360,5 @@ export const Tasks = () => {
     </>
   );
 };
+
+export default Tasks;

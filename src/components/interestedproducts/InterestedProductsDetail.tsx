@@ -103,7 +103,6 @@ const InterestedProductsDetail: React.FC = () => {
             try {
                 if (id) {
                     const response = await getCRMData('api/get-interested-product-by-id', id);
-                    // console.log("LEAD RESPONSE: ", response.data)
                     setInterestedProduct(response.data);
                     // console.log(response.data)
                 }

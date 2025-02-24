@@ -1,0 +1,8 @@
+/*
+  X-Powered-By: null
+  Server: null
+  "Content-Security-Policy": "default-src 'self' https:; script-src 'self' 'unsafe-inline' https://*.google.com https://*.gstatic.com; connect-src 'self' https://uzmandemo.com:1228/MultinetApi; frame-src 'self' https://uzmandemo.com:1228/MultinetApi https://*.google.com; worker-src 'self' blob:; img-src 'self' data: https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:;"
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()

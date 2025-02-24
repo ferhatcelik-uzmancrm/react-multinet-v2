@@ -678,32 +678,31 @@ const OffersCreate: React.FC = () => {
 
                                 {/* Next or Submit Button */}
                                 {activeStep === steps.length - 1 ? (
-                                    // <form onSubmit={handleSubmit}>
-                                    //   <Button
-                                    //     variant="outlined"
-                                    //     type="submit"
-                                    //     sx={{
-                                    //       m: 1,
-                                    //       color: btnColor,
-                                    //       borderColor: btnColor,
-                                    //       '&:hover': {
-                                    //         borderColor:
-                                    //           selectedBrand === BrandOptions.Budget
-                                    //             ? BrandColors.BudgetDark
-                                    //             : BrandColors.AvisDark,
-                                    //         backgroundColor:
-                                    //           selectedBrand === BrandOptions.Budget
-                                    //             ? BrandColors.Budget
-                                    //             : BrandColors.AvisDark,
-                                    //         color: '#fff',
-                                    //         justifyContent: 'flex-end',
-                                    //       },
-                                    //     }}
-                                    //   >
-                                    //     Güncelle
-                                    //   </Button>
-                                    // </form>
-                                    null
+                                    <form onSubmit={handleSubmit}>
+                                      <Button
+                                        variant="outlined"
+                                        type="submit"
+                                        sx={{
+                                          m: 1,
+                                          color: btnColor,
+                                          borderColor: btnColor,
+                                          '&:hover': {
+                                            borderColor:
+                                              selectedBrand === BrandOptions.Budget
+                                                ? BrandColors.BudgetDark
+                                                : BrandColors.AvisDark,
+                                            backgroundColor:
+                                              selectedBrand === BrandOptions.Budget
+                                                ? BrandColors.Budget
+                                                : BrandColors.AvisDark,
+                                            color: '#fff',
+                                            justifyContent: 'flex-end',
+                                          },
+                                        }}
+                                      >
+                                        Kaydet
+                                      </Button>
+                                    </form>
                                 ) : (
                                     <Button
                                         variant="outlined"

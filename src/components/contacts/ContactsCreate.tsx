@@ -40,8 +40,6 @@ const ContactsCreate: React.FC = () => {
     const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
     const [activeStep, setActiveStep] = React.useState(0);
     const [skipped, setSkipped] = React.useState(new Set<number>());
-    // const [cityApiEndpoint, setCityApiEndpoint] = useState('api/search-city-by-name');
-    // const [cityApiEndpoint, setCityApiEndpoint] = useState('api/search-city-by-name');
     var crmOwner = sessionStorage.getItem("crmuserid");
 
     const getByBrand = () => {

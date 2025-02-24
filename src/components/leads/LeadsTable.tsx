@@ -71,10 +71,19 @@ function stableSort<T>(
   return stabilizedThis.map((el) => el[0]);
 }
 
+// Session storage'dan değerleri almak için custom hook
+const useSessionValues = () => {
+  return {
+    userid: sessionStorage.getItem("username")?.toString() || "",
+    crmuserid: sessionStorage.getItem("crmuserid")?.toString() || "",
+    usercityid: sessionStorage.getItem("crmusercityid")?.toString() || "",
+  };
+};
+
 export default function LeadsTable() {
 
   const { selectedBrand, updateIsAccount } = useAppContext()  //Get selected brand
-
+  const sessionValues = useSessionValues();
   const navigate = useNavigate();
 
   const handleArchiveClick = (companyId: string, companyType: string) => {
@@ -109,12 +118,10 @@ export default function LeadsTable() {
   };
 
   const leadRequest = useMemo(() => ({
-    userid: sessionStorage.getItem("userid")?.toString() || "",
-    crmuserid: sessionStorage.getItem("crmuserid")?.toString() || "",
-    usercityid: sessionStorage.getItem("crmusercityid")?.toString() || "",
+    ...sessionValues,
     new_taxnumber: "",
     name: ""
-  }), []);
+  }), [sessionValues.userid, sessionValues.crmuserid, sessionValues.usercityid]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,7 +129,7 @@ export default function LeadsTable() {
         const response = await getCRMData('api/get-leads', leadRequest);
         setLeads(response.data);
       } catch (error) {
-        alert(error);
+        console.error('Veri çekme hatası:', error);
       }
     };
     fetchData();
@@ -422,21 +429,21 @@ export default function LeadsTable() {
                   fontWeight="lg"
                   endDecorator={<i data-feather="arrow-down" />}
                   sx={{
-                    "& svg": {
+                    "& svg": {
                       transition: "0.2s",
                       transform:
                         order === "desc" ? "rotate(0deg)" : "rotate(180deg)",
                     },
                   }}
                 >
-                  Firma Adı
+                  Firma Adı
                 </Link>
               </th>
-              <th style={{ width: 220, padding: 12 }}>Marka Adı</th>
-              {/* <th style={{ width: 120, padding: 12 }}>Vergi No</th> */}
-              <th style={{ width: 120, padding: 12 }}>Firma Telefon</th>
-              <th style={{ width: 120, padding: 12 }}>Firma E-posta</th>
-              <th style={{ width: 120, padding: 12 }}> </th>
+              <th style={{ width: 220, padding: 12 }}>Marka Adı</th>
+              {/* th style={{ width: 120, padding: 12 }}>Vergi No</th */}
+              <th style={{ width: 120, padding: 12 }}>Firma Telefon</th>
+              <th style={{ width: 120, padding: 12 }}>Firma E-posta</th>
+              <th style={{ width: 120, padding: 12 }}> </th>
             </tr>
           </thead>
           <tbody>
@@ -460,25 +467,25 @@ export default function LeadsTable() {
                   </td>
                   <td>
                     <Typography fontWeight="md">
-                      {/* <Chip
-                        variant="soft"
-                        size="sm"
-                        startDecorator={
-                          {
-                            Contact: <i data-feather="check" />,
-                            Account: <i data-feather="corner-up-left" />,
-                            Cancelled: <i data-feather="x" />,
-                          }[row.companyname]
-                        }
-                        color={
-                          {
-                            Account: "success",
-                            Contact: "danger",
-                            Cancelled: "neutral",
-                          }[row.companyname] as ColorPaletteProp
-                        }
-                      >{row.companyname}
-                      </Chip> */}
+                      {/* Chip
+                        variant="soft"
+                        size="sm"
+                        startDecorator={
+                          {
+                            Contact: <i data-feather="check" />,
+                            Account: <i data-feather="corner-up-left" />,
+                            Cancelled: <i data-feather="x" />,
+                          }[row.companyname]
+                        }
+                        color={
+                          {
+                            Account: "success",
+                            Contact: "danger",
+                            Cancelled: "neutral",
+                          }[row.companyname] as ColorPaletteProp
+                        }
+                      >{row.companyname}
+                      </Chip> */}
                       <Chip
                         variant="soft"
                         size="sm"
@@ -494,7 +501,7 @@ export default function LeadsTable() {
                       </Chip>
                     </Typography>
                   </td>
-                  {/* <td>{row.companyname}</td> */}
+                  {/* td>{row.companyname}</td */}
                   <td>
                     {row.companyname}
                   </td>
@@ -524,7 +531,7 @@ export default function LeadsTable() {
             ) : (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center" }}>
-                  {leads === null ? "Loading..." : "No matching contacts found."}
+                  {leads === null ? "Loading..." : "No matching contacts found."}
                 </td>
               </tr>
             )}

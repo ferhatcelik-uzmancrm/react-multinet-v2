@@ -55,22 +55,9 @@ const Navbar = () => {
   const handleProfile = () => {
     navigate("/profile");
   };
-  // const { user } = useAuth()  //Get user infos for shown
-  // console.log(sessionStorage.getItem("username"));  //Get user infos from cache for shown
+
 
   var currentUser = sessionStorage.getItem("crmusername");
-
-  // switch (currentUser) {
-  //   case "ahmetemins":
-  //     currentUser = "Ahmet Emin Şit"
-  //     break;
-  //   case "teomanal":
-  //     currentUser = "Teoman Alsan"
-  //     break;
-  //   default:
-  //     currentUser = "Crm Admin"
-  //     break;
-  // }
 
   const getNavbarStyle = (brand: BrandOptions): React.CSSProperties => {
     switch (brand) {
@@ -100,7 +87,6 @@ const Navbar = () => {
       default:
         return {
           src: BrandIcons.Multinet,
-          // src: BrandIcons.Budget,
         };
     }
   };
@@ -153,7 +139,6 @@ const Navbar = () => {
       <AppBar position="static" sx={{ ...getNavbarStyle(selectedBrand) }}>
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ padding: { xs: 0, md: "0 110px" } }}>
-            {/* <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} /> */}
             <Typography
               variant="h6"
               noWrap
@@ -176,23 +161,10 @@ const Navbar = () => {
                 sx={{
                   height: 40,
                   width: 230,
-                  // height: selectedBrand === BrandOptions.Filo ? 30 : 40,
-                  // width: selectedBrand === BrandOptions.Budget ? 175 : 120,
                   marginRight: "20px",
                 }}
               />
             </Typography>
-
-            {/* <Divider
-              orientation="vertical"
-              variant="middle"
-              flexItem
-              sx={{
-                backgroundColor: "#fff",
-                marginRight: "20px",
-                display: { xs: "none", md: "block" },
-              }}
-            /> */}
 
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <IconButton
@@ -235,7 +207,6 @@ const Navbar = () => {
                 ))}
               </Menu>
             </Box>
-            {/* <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} /> */}
             <Typography
               variant="h5"
               noWrap
@@ -255,7 +226,7 @@ const Navbar = () => {
               <Box
                 component="img"
                 alt="Logo"
-                src={brandLogoSrc} //"/media/avis-logo.svg"
+                src={brandLogoSrc} 
                 sx={{ height: 40, width: 120, marginRight: "10px" }}
               />
             </Typography>

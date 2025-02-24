@@ -10,11 +10,15 @@ import Link from "@mui/material/Link";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import ReCAPTCHA from "react-google-recaptcha";
 import * as React from "react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { LoginRequestModel } from "../models/Login";
+import ReCAPTCHA from 'react-google-recaptcha';
+import config from "../config/config";
+
+const configInstance = config.getInstance();
+const recaptchaKey = configInstance.getRecaptchaKey();
 
 function Copyright(props: any) {
   return (
@@ -48,8 +52,7 @@ const defaultTheme = createTheme({
 const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-
+  const RECAPTCHA_SITE_KEY = recaptchaKey || '';
   const [formData, setFormData] = useState<LoginRequestModel>({
     username: "",
     password: "",
@@ -70,39 +73,45 @@ const Login = () => {
     }));
   };
 
-  const handleCaptchaChange = (value: string | null) => {
-    setCaptchaValue(value);
-    setCaptchaError(false);
+  const handleCaptchaChange = (token: string | null) => {
+    if (token) {
+      setCaptchaValue(token);
+      setCaptchaError(false);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
     
+    // Captcha kontrolü
     if (!captchaValue) {
       setCaptchaError(true);
+      setLoading(false);
       return;
     }
-    
-    setLoading(true);
 
     try {
-      formData.captchaToken = captchaValue;
-      const isLoginSuccessful = await login({...formData});
-      setShowAlert(!isLoginSuccessful);
+      const loginDataWithCaptcha = {
+        ...formData,
+        captchaToken: captchaValue
+      };
       
-      if (!isLoginSuccessful) {
-        recaptchaRef.current?.reset();
-        setCaptchaValue(null);
-      }
+      const isLoginSuccessful = await login(loginDataWithCaptcha);
+      setShowAlert(!isLoginSuccessful);
     } catch (error) {
       console.error("Login failed: ", error);
       setShowAlert(true);
-      recaptchaRef.current?.reset();
-      setCaptchaValue(null);
     } finally {
       setLoading(false);
     }
   };
+  
+  // Null check ekle
+  if (!RECAPTCHA_SITE_KEY) {
+    console.error('reCAPTCHA site key is missing');
+    return null; // veya loading state göster
+  }
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -119,7 +128,7 @@ const Login = () => {
           <Box
             component="img"
             alt="Logo"
-            src="https://multinet.com.tr/themes/custom/multinet/logo.svg"
+            src="/media/multinet-logo.svg"
             width={isMobile ? 340 : 400}
             m={4}
           />
@@ -176,27 +185,22 @@ const Login = () => {
               control={<Checkbox value="remember" color="default" />}
               label="Beni Hatırla"
             />
-            <Box
-              sx={{
-                mt: 3,
-                display: 'flex',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2
-              }}
-            >
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey="6LeXOrgqAAAAALce8_SkmrvmZirZTV63ifoxfpJn"
-                onChange={handleCaptchaChange}
-              />
-              {captchaError && (
-                <Typography color="error" variant="caption">
-                  Lütfen CAPTCHA doğrulamasını tamamlayın
-                </Typography>
-              )}
-            </Box>
+           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+      <ReCAPTCHA
+        sitekey={RECAPTCHA_SITE_KEY}
+        onChange={handleCaptchaChange}
+        theme="light"
+      />
+    </Box>
+            
+            {captchaError && (
+              <Box sx={{ mt: 1 }}>
+                <Alert severity="error" onClose={() => setCaptchaError(false)}>
+                  Lütfen robot olmadığınızı doğrulayın.
+                </Alert>
+              </Box>
+            )}
+
             <Button
               type="submit"
               fullWidth
@@ -213,7 +217,7 @@ const Login = () => {
                   backgroundColor: "#f7a724",
                 },
               }}
-              disabled={loading}
+              disabled={loading || !captchaValue}
             >
               Giriş
             </Button>

@@ -22,6 +22,7 @@ import FormControl from '@mui/material/FormControl';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import FormHelperText from '@mui/material/FormHelperText';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 // Password validation interface
 interface PasswordValidation {
@@ -93,6 +94,9 @@ const ForgotPassword = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
+  const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || '';
 
   // Password validation function
   const validatePassword = (password: string) => {
@@ -130,8 +134,19 @@ const ForgotPassword = () => {
     setConfirmPassword(event.target.value);
   };
 
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptchaValue(value);
+    setCaptchaError(false);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Captcha kontrolü
+    if (!captchaValue) {
+      setCaptchaError(true);
+      return;
+    }
 
     if (!isPasswordValid()) {
       setAlertState({
@@ -158,7 +173,12 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      await sendRequest("api/user/forgot-password", formData);
+      const forgotPasswordDataWithCaptcha = {
+        ...formData,
+        captchaToken: captchaValue
+      };
+      
+      await sendRequest("api/user/forgot-password", forgotPasswordDataWithCaptcha);
       setAlertState({
         message: "Password updated successfully!",
         type: 'success',
@@ -227,7 +247,7 @@ const ForgotPassword = () => {
             <Box
               component="img"
               alt="Logo"
-              src="https://multinet.com.tr/themes/custom/multinet/logo.svg"
+              src="/media/multinet-logo(2).svg"
               width={isMobile ? 340 : 400}
               m={4}
             />
@@ -306,6 +326,22 @@ const ForgotPassword = () => {
                 )}
               </FormControl>
 
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleCaptchaChange}
+                  theme="light"
+                />
+              </Box>
+              
+              {captchaError && (
+                <Box sx={{ mt: 1 }}>
+                  <Alert severity="error" onClose={() => setCaptchaError(false)}>
+                    Lütfen robot olmadığınızı doğrulayın.
+                  </Alert>
+                </Box>
+              )}
+
               <Button
                 type="submit"
                 fullWidth
@@ -322,7 +358,7 @@ const ForgotPassword = () => {
                     backgroundColor: "#f7a724",
                   },
                 }}
-                disabled={loading || !isPasswordValid() || !passwordsMatch}
+                disabled={loading || !isPasswordValid() || !passwordsMatch || !captchaValue}
               >
                 Gönder
               </Button>

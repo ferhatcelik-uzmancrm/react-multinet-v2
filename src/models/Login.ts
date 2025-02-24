@@ -1,8 +1,8 @@
-export type LoginRequestModel = {
+export interface LoginRequestModel {
   username: string;
   password: string;
   captchaToken?: string;
-};
+}
 
 export type UserModel = {
   user: string;

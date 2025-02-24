@@ -11,10 +11,10 @@ import {
   Typography,
 } from "@mui/material";
 
-import { useAppContext } from "../contexts/AppContext";
-import { BrandOptions } from "../enums/Enums";
+import { useAppContext } from "../../contexts/AppContext";
+import { BrandOptions } from "../../enums/Enums";
 
-const Dashboard = () => {
+const DashboardDetail = () => {
   const { selectedBrand } = useAppContext();
   const getBrandDetails = () => {
     switch (selectedBrand) {
@@ -272,4 +272,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardDetail;

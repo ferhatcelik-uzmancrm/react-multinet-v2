@@ -34,7 +34,6 @@ import { CSSObject, styled, Theme, useTheme } from "@mui/material/styles";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import Dashboard from "../components/Dashboard";
 import Appointments from "../components/appointments/Appointments";
 import Companies from "../components/companies/Companies";
 import Contacts from "../components/contacts/Contacts";
@@ -46,8 +45,9 @@ import Opportunities from "../components/opportunities/Opportunities";
 import Phones from "../components/phones/Phones";
 import { useAuth } from "../contexts/AuthContext";
 import ScrollToTop from "../widgets/ScrollToTop";
-import { Content } from "./Content";
+import Content  from "./Content";
 import QuoteDetails from "../components/quotedetails/QuoteDetails";
+import Dashboards from "../components/dashboards/Dashboards";
 
 const drawerWidth = 240;
 
@@ -80,10 +80,8 @@ const closedMixin = (theme: Theme): CSSObject => ({
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  // justifyContent: "flex-end",
   justifyContent: "space-between",
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
 }));
 
@@ -118,7 +116,6 @@ const Sidebar = () => {
   const [open, setOpen] = useState(!isMobile); // Hide sidebar on mobile
   const [selectedItem, setSelectedItem] = useState("/");
   const [selectedText, setSelectedText] = useState("");
-  // const { selectedBrand } = useAppContext();
   const [activitiesOpen, setActivitiesOpen] = useState(false);
   const storedItem = sessionStorage.getItem("selectedSidebarItem");
   const handleDrawerOpen = () => {
@@ -150,65 +147,6 @@ const Sidebar = () => {
     logout();
   };
 
-  // const greetingMessages = [
-  //   "Hoşgeldiniz",
-  //   "Welcome",
-  //   "Добро пожаловать",
-  //   "Willkommen",
-  //   "Bienvenido",
-  //   "أهلاً وسهلاً",
-  //   "Bienvenue",
-  // ];
-  // const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setCurrentMessageIndex((prevIndex) =>
-  //       (prevIndex + 1) % greetingMessages.length
-  //     );
-  //   }, 5000);
-
-  //   return () => clearInterval(interval);
-  // }, []);
-
-  // interface TabPanelProps {
-  //   children?: React.ReactNode;
-  //   index: number;
-  //   value: number;
-  // }
-
-  // function TabPanel(props: TabPanelProps) {
-  //   const { children, value, index, ...other } = props;
-
-  //   return (
-  //     <div
-  //       role="tabpanel"
-  //       hidden={value !== index}
-  //       id={`vertical-tabpanel-${index}`}
-  //       aria-labelledby={`vertical-tab-${index}`}
-  //       {...other}
-  //     >
-  //       {value === index && (
-  //         <Box sx={{ p: 3 }}>
-  //           <Typography>{children}</Typography>
-  //         </Box>
-  //       )}
-  //     </div>
-  //   );
-  // }
-
-  // function a11yProps(index: number) {
-  //   return {
-  //     id: `vertical-tab-${index}`,
-  //     "aria-controls": `vertical-tabpanel-${index}`,
-  //   };
-  // }
-
-  // const [value, setValue] = React.useState(0);
-
-  // const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-  //   setValue(newValue);
-  // };
 
   const handleActivitiesToggle = () => {
     setActivitiesOpen(!activitiesOpen);
@@ -247,9 +185,9 @@ const Sidebar = () => {
           {[
             {
               text: "Anasayfa",
-              path: "/",
+              path: "/dashboards",
               icon: <DashboardCustomizeTwoTone />,
-              component: Dashboard,
+              component: Dashboards,
             },
             {
               text: "Müşteri Adayı",
