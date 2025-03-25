@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@emotion/react";
 import { FeedRounded, KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
 import { Box, Button, Container, createTheme, Grid, MenuItem, Step, StepLabel, Stepper, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
@@ -94,14 +94,25 @@ const CompaniesDetail: React.FC = () => {
         ModifiedOn: "",
         CreatedBy: "",
         ModifiedBy: "",
+        IsCreateActivity:false,
     });
+
+const companyRequest = useMemo(() => ({
+    id: id,
+    UserId: sessionStorage.getItem("userid")?.toString() || "",
+    CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
+    UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
+    Name: "",
+    TaxNumber: ""
+  }), []);
+
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 if (id) {
                     console.log("CompanyId: ", id)
-                    const response = await getCRMData('api/get-company-by-id', id);
+                    const response = await getCRMData('api/get-company-by-id', companyRequest);
                     setAccount(response.data);
                 }
             } catch (error) {
@@ -466,7 +477,7 @@ const CompaniesDetail: React.FC = () => {
                     </Grid >
                 );
             case 2:
-                return <CompaniesSubDetail />
+                return <CompaniesSubDetail data={account}/>
             default:
                 return 'Unknown step';
         }
@@ -742,7 +753,7 @@ const CompaniesDetail: React.FC = () => {
                     </Grid >
                 );
             case 2:
-                return <CompaniesSubDetail />
+                return <CompaniesSubDetail data={account}/>
             default:
                 return 'Unknown step';
         }

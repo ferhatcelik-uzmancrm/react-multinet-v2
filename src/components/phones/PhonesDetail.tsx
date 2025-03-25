@@ -79,8 +79,8 @@ const PhonesDetail: React.FC = () => {
   const [phone, setPhone] = useState<Phone>({
     PhoneId: "",
     Subject: "",
-    From: [],
-    To: [],
+    From: { Id: "", Name: "", LogicalName: "" },
+    To: { Id: "", Name: "", LogicalName: "" },
     RegardingObjectId: { Id: "", Name: "", LogicalName: "" },
     PhoneNumber: "",
     DirectionCode: false,

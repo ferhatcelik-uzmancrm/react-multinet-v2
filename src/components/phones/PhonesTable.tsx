@@ -163,33 +163,26 @@ export default function PhonesTable() {
 
   const renderFilters = () => (
     <React.Fragment>
-      <FormControl size="sm">
-        {/* <FormLabel>Durum</FormLabel>
-        <Select
-          size="md"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
-        >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Kategori</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Müşteri</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl>
+      <FormControl sx={{ flex: 0 }} size="sm">
+          <FormLabel>Telefon görüşmesi oluştur</FormLabel>
+          <MaterialButton
+            variant="contained"
+            sx={{
+              border: "none",
+              textTransform: "capitalize",
+              color: "white",
+              backgroundColor: "#211d3c",
+              fontSize: "16px",
+              "&:hover": {
+                backgroundColor: "#f7a724",
+              },
+            }}
+            disabled={loading}
+            onClick={createClick}
+          >
+            Yeni Telefon
+          </MaterialButton>
+        </FormControl>
     </React.Fragment>
   );
 
@@ -239,15 +232,10 @@ export default function PhonesTable() {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
             <ModalClose />
-            <Typography id="filter-modal" level="h2">
-              Filters
-            </Typography>
+            
             <Divider sx={{ my: 2 }} />
             <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {renderFilters()}
-              <Button color="primary" onClick={() => setOpen(false)}>
-                Submit
-              </Button>
+              {renderFilters()}           
             </Sheet>
           </ModalDialog>
         </Modal>
@@ -311,26 +299,7 @@ export default function PhonesTable() {
         </FormControl>
 
         {renderFilters()}
-        <FormControl sx={{ flex: 0 }} size="sm">
-          <FormLabel>Telefon görüşmesi oluştur</FormLabel>
-          <MaterialButton
-            variant="contained"
-            sx={{
-              border: "none",
-              textTransform: "capitalize",
-              color: "white",
-              backgroundColor: "#211d3c",
-              fontSize: "16px",
-              "&:hover": {
-                backgroundColor: "#f7a724",
-              },
-            }}
-            disabled={loading}
-            onClick={createClick}
-          >
-            Yeni Telefon
-          </MaterialButton>
-        </FormControl>
+        
 
       </Box>
       <Sheet
@@ -446,8 +415,8 @@ export default function PhonesTable() {
                   <td>
                     {row.Subject}
                   </td>
-                  <td>{row.From?.map(from => from.Name).join(', ')}</td>
-                  <td>{row.To?.map(to => to.Name).join(', ')}</td>
+                  <td>{row.From?.Name}</td>
+                  <td>{row.To?.Name}</td>
                   <td>{row.RegardingObjectId?.Name}</td>
                   <td>{row.PhoneNumber}</td>
                   <td style={{ textAlign: "right" }}>

@@ -10,12 +10,12 @@ export interface Email {
   Subject: string;
   Message: string;
   From: LookupValueModel;
-  To: LookupValueModel[]; // Array for multiple recipients
-  Cc: LookupValueModel[]; // Array for CC recipients
-  Bcc: LookupValueModel[]; // Array for BCC recipients
+  To: LookupValueModel; // Array for multiple recipients
+  Cc: LookupValueModel; // Array for CC recipients
+  Bcc: LookupValueModel; // Array for BCC recipients
   IsMultiNetActivity: boolean;
   RegardingObjectId: LookupValueModel;
-  ActualDurationMinutes: number | null; // Optional property
+  // ActualDurationMinutes: OptionSetValueModel; // Optional property
 }
 
 export type EmailRequest = {

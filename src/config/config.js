@@ -21,7 +21,7 @@ const CONFIG = {
     },
   
     // API Timeout
-    TIMEOUT: 12000,
+    TIMEOUT: 60000,
   
     // Build Settings
     IS_PRODUCTION: process.env.NODE_ENV === 'production',

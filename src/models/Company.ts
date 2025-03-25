@@ -26,6 +26,7 @@ export type Company = {
   ModifiedOn: string;
   CreatedBy: string;
   ModifiedBy: string;
+  IsCreateActivity: boolean;
 };
 
 export type CompanyRequest = {

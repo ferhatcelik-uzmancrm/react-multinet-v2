@@ -1,7 +1,22 @@
 import { ThemeProvider } from "@emotion/react";
-import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, MenuItem, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
-import React, { useState } from "react";
+import {
+  KeyboardDoubleArrowLeftRounded,
+  KeyboardDoubleArrowRightRounded
+} from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Container,
+  createTheme,
+  Grid,
+  MenuItem,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
@@ -11,19 +26,23 @@ import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { LookupValueModel } from "../../models/shared/LookupValueModel";
 
 const PhonesCreate: React.FC = () => {
   const { selectedBrand } = useAppContext();
   const location = useLocation();
-  const stateData = location.state?.data || [];
-  console.log(stateData);
-  const steps = ['', ''];
+  const { leadId, leadidname } = location.state || {};
+  const user = {
+    Id: sessionStorage.getItem("crmuserid"),
+    Name: sessionStorage.getItem("crmusername")
+  };
+  const steps = ["", ""];
   const [alertState, setAlertState] = useState({
-    message: '',
-    type: 'success' as 'success' | 'danger',
-    position: 'bottom-right' as 'bottom-right' | 'center',
+    message: "",
+    type: "success" as "success" | "danger",
+    position: "bottom-right" as "bottom-right" | "center",
     showProgress: false,
-    isOpen: false,
+    isOpen: false
   });
 
   const closeAlert = () => {
@@ -39,20 +58,20 @@ const PhonesCreate: React.FC = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:
         return {
-          btnColor: BrandColors.AvisDark,
+          btnColor: BrandColors.AvisDark
         };
       case BrandOptions.Filo:
         return {
-          btnColor: BrandColors.FiloDark,
+          btnColor: BrandColors.FiloDark
         };
       case BrandOptions.Budget:
         return {
-          btnColor: BrandColors.BudgetDark,
+          btnColor: BrandColors.BudgetDark
         };
 
       default:
         return {
-          btnColor: "#333333",
+          btnColor: "#333333"
         };
     }
   };
@@ -62,16 +81,20 @@ const PhonesCreate: React.FC = () => {
   const defaultTheme = createTheme({
     palette: {
       primary: {
-        main: btnColor,
+        main: btnColor
       }
-    },
+    }
   });
 
   const [phone, setPhone] = useState<Phone>({
     PhoneId: "",
     Subject: "",
-    From: [],
-    To: [],
+    From: {
+      Id: user.Id || "",
+      Name: user.Name || "",
+      LogicalName: "systemuser"
+    },
+    To: { Id: "", Name: "", LogicalName: "" },
     RegardingObjectId: { Id: "", Name: "", LogicalName: "" },
     PhoneNumber: "",
     DirectionCode: false,
@@ -80,67 +103,91 @@ const PhonesCreate: React.FC = () => {
     ActivityStateId: { Id: "", Name: "", LogicalName: "" },
     AramaKod: "",
     Gakampnayaad: "",
-    IsPlannedActivity: false,
+    IsPlannedActivity: false
   });
+
+  useEffect(() => {
+    // Direkt olarak navigation state'inden gelen bilgileri kullanıyoruz
+    if (leadId) {
+      setPhone((prev) => ({
+        ...prev,
+        RegardingObjectId: {
+          Id: leadId,
+          Name: leadidname || "",
+          LogicalName: "lead" // veya sisteminizde kullanılan logical name
+        },
+        To: {
+          Id: leadId,
+          Name: leadidname || "",
+          LogicalName: "lead" // veya sisteminizde kullanılan logical name
+        }
+      }));
+    }
+  }, []);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setPhone((prevPhone) => ({
       ...prevPhone,
-      [name]: value,
+      [name]: value
     }));
 
-    console.log("Error name: ", name)
+    console.log("Error name: ", name);
 
     if (errors[name]) {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: false,
+        [name]: false
       }));
     }
   };
-  const handleSelectFieldChange = (idField: string, nameField: string) =>
+  const handleSelectFieldChange =
+    (idField: string, nameField: string) =>
     (value: LookupOptionType | LookupOptionType[] | null) => {
       if (Array.isArray(value)) {
         // Çoklu seçim modunda birden fazla seçili öğe varsa
-        const selectedIds = value.map(option => option.Id).join(', ');
-        const selectedNames = value.map(option => option.Name).join(', ');
-        setPhone((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+        const selectedIds = value.map((option) => option.Id).join(", ");
+        const selectedNames = value.map((option) => option.Name).join(", ");
+        setPhone((prev) => ({
+          ...prev,
+          [idField]: selectedIds,
+          [nameField]: selectedNames
+        }));
       } else {
         // Tekli seçim modunda
         setPhone((prev) => ({
           ...prev,
           [idField]: value ? value.Id : null,
-          [nameField]: value ? value.Name : '',
+          [nameField]: value ? value.Name : ""
         }));
       }
     };
-  const handleSelectFieldChange2 = (fieldName: string) =>
+  const handleSelectFieldChange2 =
+    (fieldName: string) =>
     (value: LookupOptionType | LookupOptionType[] | null) => {
       if (Array.isArray(value)) {
         // Çoklu seçim modunda
-        const selectedIds = value.map(option => option.Id).join(', ');
-        const selectedNames = value.map(option => option.Name).join(', ');
-        setPhone(prev => ({
+        const selectedIds = value.map((option) => option.Id).join(", ");
+        const selectedNames = value.map((option) => option.Name).join(", ");
+        setPhone((prev) => ({
           ...prev,
           [fieldName]: { Id: selectedIds, Name: selectedNames }
         }));
       } else {
         // Tekli seçim modunda
-        setPhone(prev => ({
+        setPhone((prev) => ({
           ...prev,
-          [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+          [fieldName]: {
+            Id: value ? value.Id : "",
+            Name: value ? value.Name : ""
+          }
         }));
       }
     };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const requiredFields = [
-      'Subject',
-      'From.Id',
-      'To.Id'
-    ];
+    const requiredFields = ["Subject"];
 
     const newErrors: { [key: string]: boolean } = {};
 
@@ -154,59 +201,79 @@ const PhonesCreate: React.FC = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setAlertState({
-        message: 'Lütfen tüm zorunlu alanları doldurun.',
-        type: 'danger',
-        position: 'bottom-right',
+        message: "Lütfen tüm zorunlu alanları doldurun.",
+        type: "danger",
+        position: "bottom-right",
         showProgress: false,
-        isOpen: true,
+        isOpen: true
       });
       return;
     }
 
-    console.log('Form submitted successfully', phone);
+    console.log("Form submitted successfully", phone);
 
-
-    setLoading(true)
+    setLoading(true);
 
     try {
-      await sendRequest("api/upsert-phone", phone)
-        .then(response => {
-          console.log("Phone created:", response.data)
+      const phoneRequest= {
+        From: ensureLookupFormat(phone.From),
+        To: ensureLookupFormat(phone.To),
+        RegardingObjectId: ensureLookupFormat(phone.RegardingObjectId),
+        ActivityTypeId: ensureLookupFormat(phone.ActivityTypeId),
+        ActivityReasonId: ensureLookupFormat(phone.ActivityReasonId),
+        ActivityStateId: ensureLookupFormat(phone.ActivityStateId),
+        // Boolean değerlerinin doğru formatta olduğundan emin olalım
+        DirectionCode: Boolean(phone.DirectionCode),
+        IsPlannedActivity: Boolean(phone.IsPlannedActivity)
+      };
+
+      await sendRequest("api/upsert-phone", phoneRequest)
+        .then((response) => {
+          console.log("Phone created:", response.data);
           setAlertState({
             message: "Phone created successfully!",
-            type: 'success',
-            position: 'bottom-right',
+            type: "success",
+            position: "bottom-right",
             showProgress: true,
-            isOpen: true,
+            isOpen: true
           });
         })
-        .catch(error => {
-          console.error("Error creating phone:", error)
+        .catch((error) => {
+          console.error("Error creating phone:", error);
           setAlertState({
             message: "Error creating phone. Please try again.",
-            type: 'danger',
-            position: 'bottom-right',
+            type: "danger",
+            position: "bottom-right",
             showProgress: true,
-            isOpen: true,
+            isOpen: true
           });
         });
     } catch (error) {
       console.error("Error:", error);
       setAlertState({
         message: "Error creating phone. Please try again.",
-        type: 'danger',
-        position: 'bottom-right',
+        type: "danger",
+        position: "bottom-right",
         showProgress: true,
-        isOpen: true,
+        isOpen: true
       });
-    }
-    finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
 
     // window.location.reload();
   };
-
+// LookupValueModel alanlarının doğru formatta olduğundan emin olma
+const ensureLookupFormat = (lookup: any): LookupValueModel | null => {
+  if (!lookup) return null;
+  
+  // Id varsa ve string ise, doğru formatta gönder
+  return {
+    Id: lookup.Id || (lookup.id ? lookup.id : null),
+    Name: lookup.Name || (lookup.name ? lookup.name : ''),
+    LogicalName: lookup.LogicalName || (lookup.logicalName ? lookup.logicalName : '')
+  };
+};
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
   };
@@ -243,7 +310,7 @@ const PhonesCreate: React.FC = () => {
                 name="PhoneId"
                 value={phone.PhoneId}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -266,10 +333,10 @@ const PhonesCreate: React.FC = () => {
                 label="Arayan Kişi"
                 getCRMData={getCRMData}
                 selectedValue={phone.From ? phone.From : null}
-                onValueChange={handleSelectFieldChange2('From')}
+                onValueChange={handleSelectFieldChange2("From")}
                 error={!!errors.From} // Hata kontrolü
-                helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                isMulti={true}
+                helperText={errors.From ? "Bu alan zorunludur" : ""} // Hata mesajı
+                isMulti={false}
                 required={true}
               />
             </Grid>
@@ -280,10 +347,10 @@ const PhonesCreate: React.FC = () => {
                 label="Arama Hedefi"
                 getCRMData={getCRMData}
                 selectedValue={phone.To ? phone.To : null}
-                onValueChange={handleSelectFieldChange2('To')}
+                onValueChange={handleSelectFieldChange2("To")}
                 error={!!errors.To} // Hata kontrolü
-                helperText={errors.From ? 'Bu alan zorunludur' : ''} // Hata mesajı
-                isMulti={true}
+                helperText={errors.From ? "Bu alan zorunludur" : ""} // Hata mesajı
+                isMulti={false}
                 required={true}
               />
             </Grid>
@@ -294,7 +361,9 @@ const PhonesCreate: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 name="RegardingObjectId"
-                value={phone.RegardingObjectId ? phone.RegardingObjectId.Name : ''}
+                value={
+                  phone.RegardingObjectId ? phone.RegardingObjectId.Name : ""
+                }
                 onChange={handleInputChange}
               />
             </Grid>
@@ -321,7 +390,7 @@ const PhonesCreate: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 name="DirectionCode"
-                value={phone.DirectionCode ? Number(phone.DirectionCode) : ''}
+                value={phone.DirectionCode ? Number(phone.DirectionCode) : ""}
                 onChange={handleInputChange}
               >
                 <MenuItem value="">---</MenuItem>
@@ -335,10 +404,18 @@ const PhonesCreate: React.FC = () => {
                 apiEndpoint="api/search-lookup-by-name/new_activitytype/new_name"
                 label="Aktivite Türü"
                 getCRMData={getCRMData}
-                selectedValue={phone.ActivityTypeId ? { Id: phone.ActivityTypeId.Id, Name: phone.ActivityTypeId.Name, LogicalName: phone.ActivityTypeId.LogicalName } : null}
-                onValueChange={handleSelectFieldChange2('ActivityTypeId')}
+                selectedValue={
+                  phone.ActivityTypeId
+                    ? {
+                        Id: phone.ActivityTypeId.Id,
+                        Name: phone.ActivityTypeId.Name,
+                        LogicalName: phone.ActivityTypeId.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("ActivityTypeId")}
                 error={!!errors.ActivityTypeId} // Hata kontrolü
-                helperText={errors.ActivityTypeId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                helperText={errors.ActivityTypeId ? "Bu alan zorunludur" : ""} // Hata mesajı
               />
               {/* <TextField
                 label="Etkinlik Türü"
@@ -355,10 +432,18 @@ const PhonesCreate: React.FC = () => {
                 apiEndpoint="api/search-lookup-by-name/new_activityreason/new_name"
                 label="Arama Sebepleri"
                 getCRMData={getCRMData}
-                selectedValue={phone.ActivityReasonId ? { Id: phone.ActivityReasonId.Id, Name: phone.ActivityReasonId.Name, LogicalName: phone.ActivityReasonId.LogicalName } : null}
-                onValueChange={handleSelectFieldChange2('ActivityReasonId')}
+                selectedValue={
+                  phone.ActivityReasonId
+                    ? {
+                        Id: phone.ActivityReasonId.Id,
+                        Name: phone.ActivityReasonId.Name,
+                        LogicalName: phone.ActivityReasonId.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("ActivityReasonId")}
                 error={!!errors.ActivityReasonId} // Hata kontrolü
-                helperText={errors.ActivityReasonId ? 'Bu alan zorunludur' : ''} // Hata mesajı
+                helperText={errors.ActivityReasonId ? "Bu alan zorunludur" : ""} // Hata mesajı
               />
               {/* <TextField
                 label="Etkinlik Nedeni"
@@ -376,7 +461,7 @@ const PhonesCreate: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 name="ActivityStateId"
-                value={phone.ActivityStateId ? phone.ActivityStateId.Name : ''}
+                value={phone.ActivityStateId ? phone.ActivityStateId.Name : ""}
                 onChange={handleInputChange}
               />
             </Grid>
@@ -388,7 +473,9 @@ const PhonesCreate: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 name="IsPlannedActivity"
-                value={phone.IsPlannedActivity ? Number(phone.IsPlannedActivity) : ''}
+                value={
+                  phone.IsPlannedActivity ? Number(phone.IsPlannedActivity) : ""
+                }
                 onChange={handleInputChange}
               >
                 <MenuItem value="">---</MenuItem>
@@ -396,11 +483,10 @@ const PhonesCreate: React.FC = () => {
                 <MenuItem value={1}>Evet</MenuItem>
               </TextField>
             </Grid>
-
-          </Grid >
+          </Grid>
         );
       default:
-        return 'Unknown step';
+        return "Unknown step";
     }
   };
 
@@ -408,16 +494,15 @@ const PhonesCreate: React.FC = () => {
     <Container
       sx={{
         maxWidth: {
-          xs: '100%',
-          sm: '600px',
-          md: '960px',
-          lg: '1280px',
-          xl: '1920px',
+          xs: "100%",
+          sm: "600px",
+          md: "960px",
+          lg: "1280px",
+          xl: "1920px"
         },
-        display: 'block',
+        display: "block"
       }}
     >
-
       {/* CUSTOM ALERT */}
       <AlertComponent
         message={alertState.message}
@@ -429,18 +514,20 @@ const PhonesCreate: React.FC = () => {
       />
       {/* CUSTOM ALERT */}
 
-      {loading ? <Spinner type="hash" size={50} color="#d0052d" /> : (
-        <Box sx={{ width: '100%' }}>
+      {loading ? (
+        <Spinner type="hash" size={50} color="#d0052d" />
+      ) : (
+        <Box sx={{ width: "100%" }}>
           <ThemeProvider theme={defaultTheme}>
             <Stepper
               activeStep={activeStep}
               sx={{
-                '& .MuiSvgIcon-root': {
+                "& .MuiSvgIcon-root": {
                   color:
                     selectedBrand === BrandOptions.Budget
                       ? BrandColors.Budget
-                      : BrandColors.AvisDark,
-                },
+                      : BrandColors.AvisDark
+                }
               }}
             >
               {steps.map((label, index) => {
@@ -462,8 +549,8 @@ const PhonesCreate: React.FC = () => {
               <Typography sx={{ mt: 2, mb: 1 }}>
                 All steps completed - you&apos;re finished
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                <Box sx={{ flex: '1 1 auto' }} />
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+                <Box sx={{ flex: "1 1 auto" }} />
                 <Button onClick={handleReset}>Reset</Button>
               </Box>
             </React.Fragment>
@@ -475,23 +562,23 @@ const PhonesCreate: React.FC = () => {
                   {getStepContactContent(activeStep)}
                 </form>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
                 {/* Back Button */}
                 <Button
                   sx={{
                     m: 1,
-                    width: '25px',
-                    borderColor: 'GrayText',
-                    '&:hover': {
+                    width: "25px",
+                    borderColor: "GrayText",
+                    "&:hover": {
                       borderColor:
                         selectedBrand === BrandOptions.Budget
                           ? BrandColors.Budget
                           : BrandColors.AvisDark,
-                      cursor: 'pointer',
+                      cursor: "pointer"
                     },
-                    '&:active': {
-                      color: 'dark',
-                    },
+                    "&:active": {
+                      color: "dark"
+                    }
                   }}
                   variant="outlined"
                   onClick={handleBack}
@@ -500,21 +587,21 @@ const PhonesCreate: React.FC = () => {
                   <KeyboardDoubleArrowLeftRounded
                     sx={{
                       color: btnColor,
-                      '&:hover': {
+                      "&:hover": {
                         color:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer"
                       },
-                      '&:active': {
-                        color: 'dark',
-                      },
+                      "&:active": {
+                        color: "dark"
+                      }
                     }}
                   />
                 </Button>
 
-                <Box sx={{ flex: '1 1 auto' }} />
+                <Box sx={{ flex: "1 1 auto" }} />
 
                 {/* Next or Submit Button */}
                 {activeStep === steps.length - 1 ? (
@@ -526,7 +613,7 @@ const PhonesCreate: React.FC = () => {
                         m: 1,
                         color: btnColor,
                         borderColor: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           borderColor:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.BudgetDark
@@ -535,9 +622,9 @@ const PhonesCreate: React.FC = () => {
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          color: '#fff',
-                          justifyContent: 'flex-end',
-                        },
+                          color: "#fff",
+                          justifyContent: "flex-end"
+                        }
                       }}
                     >
                       Kaydet
@@ -549,33 +636,33 @@ const PhonesCreate: React.FC = () => {
                     onClick={handleNext}
                     sx={{
                       m: 1,
-                      width: '25px',
-                      borderColor: 'GrayText',
-                      '&:hover': {
+                      width: "25px",
+                      borderColor: "GrayText",
+                      "&:hover": {
                         borderColor:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer"
                       },
-                      '&:active': {
-                        color: 'dark',
-                      },
+                      "&:active": {
+                        color: "dark"
+                      }
                     }}
                   >
                     <KeyboardDoubleArrowRightRounded
                       sx={{
                         color: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           color:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          cursor: 'pointer',
+                          cursor: "pointer"
                         },
-                        '&:active': {
-                          color: 'dark',
-                        },
+                        "&:active": {
+                          color: "dark"
+                        }
                       }}
                     />
                   </Button>
@@ -587,7 +674,6 @@ const PhonesCreate: React.FC = () => {
       )}
     </Container>
   );
-
 };
 
 export default PhonesCreate;

@@ -103,6 +103,7 @@ const CompaniesCreate: React.FC = () => {
         ModifiedOn: "",
         CreatedBy: crmOwner || "",
         ModifiedBy: "",
+        IsCreateActivity:false,
     });
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -502,8 +503,8 @@ const CompaniesCreate: React.FC = () => {
                         </Grid>
                     </Grid >
                 );
-            case 2:
-                return <CompaniesSubDetail />
+            // case 2:
+            //     return <CompaniesSubDetail />
             default:
                 return 'Unknown step';
         }

@@ -1,36 +1,50 @@
 import { ThemeProvider } from "@emotion/react";
-import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
-import { Box, Button, Container, createTheme, Grid, Step, StepLabel, Stepper, TextField, Typography } from "@mui/material";
+import {
+  KeyboardDoubleArrowLeftRounded,
+  KeyboardDoubleArrowRightRounded
+} from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Container,
+  createTheme,
+  Grid,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
 import { Lead } from "../../models/Lead";
-import {GenericAutocomplete} from "../../helper/Lookup";
+import { GenericAutocomplete } from "../../helper/Lookup";
 import { LookupOptionType } from "../../models/shared/Lookup";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
+import { LeadSubDetail } from "./LeadSubDetail";
 const gridItemSize = {
   xs: 12,
   sm: 12,
   md: 6,
   lg: 6,
-  xl: 6,
+  xl: 6
 };
 
 const LeadsDetail: React.FC = () => {
   const { selectedBrand } = useAppContext();
   const { id } = useParams();
-  // const location = useLocation();
-  // const stateData = location.state?.data || [];
-  const steps = ['', ''];
+  const navigate = useNavigate();
+  const steps = ["", "",""];
   const [alertState, setAlertState] = useState({
-    message: '',
-    type: 'success' as 'success' | 'danger',
-    position: 'bottom-right' as 'bottom-right' | 'center',
+    message: "",
+    type: "success" as "success" | "danger",
+    position: "bottom-right" as "bottom-right" | "center",
     showProgress: false,
-    isOpen: false,
+    isOpen: false
   });
 
   const closeAlert = () => {
@@ -46,20 +60,20 @@ const LeadsDetail: React.FC = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:
         return {
-          btnColor: BrandColors.AvisDark,
+          btnColor: BrandColors.AvisDark
         };
       case BrandOptions.Filo:
         return {
-          btnColor: BrandColors.FiloDark,
+          btnColor: BrandColors.FiloDark
         };
       case BrandOptions.Budget:
         return {
-          btnColor: BrandColors.BudgetDark,
+          btnColor: BrandColors.BudgetDark
         };
 
       default:
         return {
-          btnColor: "#333333",
+          btnColor: "#333333"
         };
     }
   };
@@ -69,9 +83,9 @@ const LeadsDetail: React.FC = () => {
   const defaultTheme = createTheme({
     palette: {
       primary: {
-        main: btnColor,
+        main: btnColor
       }
-    },
+    }
   });
 
   const [lead, setLead] = useState<Lead>({
@@ -116,81 +130,115 @@ const LeadsDetail: React.FC = () => {
     const fetchData = async () => {
       try {
         if (id) {
-          const response = await getCRMData('api/get-lead-by-id', id);
-          console.log("LEAD RESPONSE: ", response.data)
+          const response = await getCRMData("api/get-lead-by-id", id);
+          // console.log("LEAD RESPONSE: ", response.data)
           setLead(response.data);
-          console.log(response.data)
+          // console.log(response.data)
         }
       } catch (error) {
-        alert(error)
+        alert(error);
       }
     };
     fetchData();
-  }, [id]);
+  }, []);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setLead((prevAccount) => ({
       ...prevAccount,
-      [name]: value,
+      [name]: value
     }));
   };
-  
-  const handleSelectFieldChange = (idField: string, nameField: string) => 
+
+  const handleSelectFieldChange =
+    (idField: string, nameField: string) =>
     (value: LookupOptionType | LookupOptionType[] | null) => {
       if (Array.isArray(value)) {
         // Çoklu seçim modunda birden fazla seçili öğe varsa
-        const selectedIds = value.map(option => option.Id).join(', ');
-        const selectedNames = value.map(option => option.Name).join(', ');
-        setLead((prev) => ({ ...prev, [idField]: selectedIds, [nameField]: selectedNames }));
+        const selectedIds = value.map((option) => option.Id).join(", ");
+        const selectedNames = value.map((option) => option.Name).join(", ");
+        setLead((prev) => ({
+          ...prev,
+          [idField]: selectedIds,
+          [nameField]: selectedNames
+        }));
       } else {
         // Tekli seçim modunda
         setLead((prev) => ({
           ...prev,
           [idField]: value ? value.Id : null,
-          [nameField]: value ? value.Name : '',
+          [nameField]: value ? value.Name : ""
         }));
       }
     };
+
+  const handleQualify = async () => {
+    try {
+      if (id) {
+        const response = await getCRMData(`api/qualify-lead/${id}`, null);
+        if (response.data.Success) {
+          setAlertState({
+            message: "Müşteri Adayı Uygun bulundu",
+            type: "success",
+            position: "bottom-right",
+            showProgress: true,
+            isOpen: true
+          });
+          navigate(`/opportunities/detail/${response.data.OpportunityId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setAlertState({
+        message: "Bir hata oluştu. Lütfen tekrar deneyin.",
+        type: "danger",
+        position: "bottom-right",
+        showProgress: true,
+        isOpen: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // alert(JSON.stringify(lead))
-    setLoading(true)
+    setLoading(true);
 
     try {
       await sendRequest("api/upsert-lead", lead)
-        .then(response => {
-          console.log("Lead updated:", response.data)
+        .then((response) => {
+          console.log("Lead updated:", response.data);
           setAlertState({
             message: "Lead updated successfully!",
-            type: 'success',
-            position: 'bottom-right',
+            type: "success",
+            position: "bottom-right",
             showProgress: true,
-            isOpen: true,
+            isOpen: true
           });
         })
-        .catch(error => {
-          console.error("Error updating lead:", error)
+        .catch((error) => {
+          console.error("Error updating lead:", error);
           setAlertState({
             message: "Error updating lead. Please try again.",
-            type: 'danger',
-            position: 'bottom-right',
+            type: "danger",
+            position: "bottom-right",
             showProgress: true,
-            isOpen: true,
+            isOpen: true
           });
         });
     } catch (error) {
       console.error("Error:", error);
       setAlertState({
         message: "Error updating lead. Please try again.",
-        type: 'danger',
-        position: 'bottom-right',
+        type: "danger",
+        position: "bottom-right",
         showProgress: true,
-        isOpen: true,
+        isOpen: true
       });
-    }
-    finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
 
     // window.location.reload();
@@ -286,8 +334,19 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/get-source"
                 label="Müşteri Aday Kaynağı"
                 getCRMData={getCRMData}
-                selectedValue={lead.LeadSourceCode ? { Id: lead.LeadSourceCode, Name: lead.LeadSource, LogicalName:"" } : null}
-                onValueChange={handleSelectFieldChange('LeadSourceCode', 'LeadSource')}
+                selectedValue={
+                  lead.LeadSourceCode
+                    ? {
+                        Id: lead.LeadSourceCode,
+                        Name: lead.LeadSource,
+                        LogicalName: ""
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange(
+                  "LeadSourceCode",
+                  "LeadSource"
+                )}
               />
             </Grid>
 
@@ -302,7 +361,7 @@ const LeadsDetail: React.FC = () => {
                 value={lead.FirstName}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -317,7 +376,7 @@ const LeadsDetail: React.FC = () => {
                 value={lead.LastName}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -326,8 +385,19 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-contacttitle-by-name"
                 label="Yetkili Unvanı"
                 getCRMData={getCRMData}
-                selectedValue={lead.JobTitleId ? { Id: lead.JobTitleId, Name: lead.JobTitleName , LogicalName:""} : null}
-                onValueChange={handleSelectFieldChange('JobTitleId', 'JobTitleName')}
+                selectedValue={
+                  lead.JobTitleId
+                    ? {
+                        Id: lead.JobTitleId,
+                        Name: lead.JobTitleName,
+                        LogicalName: ""
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange(
+                  "JobTitleId",
+                  "JobTitleName"
+                )}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -340,7 +410,7 @@ const LeadsDetail: React.FC = () => {
                 value={lead.EmailAddress}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -355,7 +425,7 @@ const LeadsDetail: React.FC = () => {
                 value={lead.MobilePhone}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -370,18 +440,16 @@ const LeadsDetail: React.FC = () => {
                 value={lead.WebsiteUrl}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
             {/* İLGİLİ KİŞİ READONLY */}
-
           </Grid>
         );
       case 1:
         return (
           <Grid container spacing={2}>
-
             {/* ADRES READONLY */}
             {/* <Grid item {...gridItemSize}>
               <TextField
@@ -443,8 +511,19 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-country-by-name"
                 label="Ülke"
                 getCRMData={getCRMData}
-                selectedValue={lead.CountryId ? { Id: lead.CountryId, Name: lead.CountryName , LogicalName:""} : null}
-                onValueChange={handleSelectFieldChange('CountryId', 'CountryName')}
+                selectedValue={
+                  lead.CountryId
+                    ? {
+                        Id: lead.CountryId,
+                        Name: lead.CountryName,
+                        LogicalName: ""
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange(
+                  "CountryId",
+                  "CountryName"
+                )}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -452,8 +531,12 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-city-by-name"
                 label="İl"
                 getCRMData={getCRMData}
-                selectedValue={lead.CityId ? { Id: lead.CityId, Name: lead.CityName, LogicalName:"" } : null}
-                onValueChange={handleSelectFieldChange('CityId', 'CityName')}
+                selectedValue={
+                  lead.CityId
+                    ? { Id: lead.CityId, Name: lead.CityName, LogicalName: "" }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange("CityId", "CityName")}
               />
             </Grid>
 
@@ -462,8 +545,12 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-town-by-name"
                 label="İlçe"
                 getCRMData={getCRMData}
-                selectedValue={lead.TownId ? { Id: lead.TownId, Name: lead.TownName, LogicalName:"" } : null}
-                onValueChange={handleSelectFieldChange('TownId', 'TownName')}
+                selectedValue={
+                  lead.TownId
+                    ? { Id: lead.TownId, Name: lead.TownName, LogicalName: "" }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange("TownId", "TownName")}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -471,8 +558,19 @@ const LeadsDetail: React.FC = () => {
                 apiEndpoint="api/search-neighbourhood-by-name"
                 label="Mahalle"
                 getCRMData={getCRMData}
-                selectedValue={lead.NeighbourhoodId ? { Id: lead.NeighbourhoodId, Name: lead.Neighbourhood, LogicalName:"" } : null}
-                onValueChange={handleSelectFieldChange('NeighbourhoodId', 'Neighbourhood')}
+                selectedValue={
+                  lead.NeighbourhoodId
+                    ? {
+                        Id: lead.NeighbourhoodId,
+                        Name: lead.Neighbourhood,
+                        LogicalName: ""
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange(
+                  "NeighbourhoodId",
+                  "Neighbourhood"
+                )}
               />
             </Grid>
             <Grid item {...gridItemSize}>
@@ -485,16 +583,17 @@ const LeadsDetail: React.FC = () => {
                 value={lead.Addressline1}
                 // onChange={handleInputChange}
                 InputProps={{
-                  readOnly: true,
+                  readOnly: true
                 }}
               />
             </Grid>
             {/* ADRES READONLY */}
-
-          </Grid >
+          </Grid>
         );
+      case 2:
+        return <LeadSubDetail data={lead}/>;
       default:
-        return 'Unknown step';
+        return "Unknown step";
     }
   };
 
@@ -502,16 +601,15 @@ const LeadsDetail: React.FC = () => {
     <Container
       sx={{
         maxWidth: {
-          xs: '100%',
-          sm: '600px',
-          md: '960px',
-          lg: '1280px',
-          xl: '1920px',
+          xs: "100%",
+          sm: "600px",
+          md: "960px",
+          lg: "1280px",
+          xl: "1920px"
         },
-        display: 'block',
+        display: "block"
       }}
     >
-
       {/* CUSTOM ALERT */}
       <AlertComponent
         message={alertState.message}
@@ -523,18 +621,20 @@ const LeadsDetail: React.FC = () => {
       />
       {/* CUSTOM ALERT */}
 
-      {loading ? <Spinner type="hash" size={50} color="#d0052d" /> : (
-        <Box sx={{ width: '100%' }}>
+      {loading ? (
+        <Spinner type="hash" size={50} color="#d0052d" />
+      ) : (
+        <Box sx={{ width: "100%" }}>
           <ThemeProvider theme={defaultTheme}>
             <Stepper
               activeStep={activeStep}
               sx={{
-                '& .MuiSvgIcon-root': {
+                "& .MuiSvgIcon-root": {
                   color:
                     selectedBrand === BrandOptions.Budget
                       ? BrandColors.Budget
-                      : BrandColors.AvisDark,
-                },
+                      : BrandColors.AvisDark
+                }
               }}
             >
               {steps.map((label, index) => {
@@ -556,8 +656,8 @@ const LeadsDetail: React.FC = () => {
               <Typography sx={{ mt: 2, mb: 1 }}>
                 All steps completed - you&apos;re finished
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-                <Box sx={{ flex: '1 1 auto' }} />
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+                <Box sx={{ flex: "1 1 auto" }} />
                 <Button onClick={handleReset}>Reset</Button>
               </Box>
             </React.Fragment>
@@ -569,23 +669,23 @@ const LeadsDetail: React.FC = () => {
                   {getStepContactContent(activeStep)}
                 </form>
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
                 {/* Back Button */}
                 <Button
                   sx={{
                     m: 1,
-                    width: '25px',
-                    borderColor: 'GrayText',
-                    '&:hover': {
+                    width: "25px",
+                    borderColor: "GrayText",
+                    "&:hover": {
                       borderColor:
                         selectedBrand === BrandOptions.Budget
                           ? BrandColors.Budget
                           : BrandColors.AvisDark,
-                      cursor: 'pointer',
+                      cursor: "pointer"
                     },
-                    '&:active': {
-                      color: 'dark',
-                    },
+                    "&:active": {
+                      color: "dark"
+                    }
                   }}
                   variant="outlined"
                   onClick={handleBack}
@@ -594,21 +694,21 @@ const LeadsDetail: React.FC = () => {
                   <KeyboardDoubleArrowLeftRounded
                     sx={{
                       color: btnColor,
-                      '&:hover': {
+                      "&:hover": {
                         color:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer"
                       },
-                      '&:active': {
-                        color: 'dark',
-                      },
+                      "&:active": {
+                        color: "dark"
+                      }
                     }}
                   />
                 </Button>
 
-                <Box sx={{ flex: '1 1 auto' }} />
+                <Box sx={{ flex: "1 1 auto" }} />
 
                 {/* Next or Submit Button */}
                 {activeStep === steps.length - 1 ? (
@@ -620,7 +720,7 @@ const LeadsDetail: React.FC = () => {
                         m: 1,
                         color: btnColor,
                         borderColor: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           borderColor:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.BudgetDark
@@ -629,12 +729,36 @@ const LeadsDetail: React.FC = () => {
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          color: '#fff',
-                          justifyContent: 'flex-end',
-                        },
+                          color: "#fff",
+                          justifyContent: "flex-end"
+                        }
                       }}
                     >
                       Güncelle
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      type="button"
+                      onClick={handleQualify}
+                      sx={{
+                        m: 1,
+                        color: btnColor,
+                        borderColor: btnColor,
+                        "&:hover": {
+                          borderColor:
+                            selectedBrand === BrandOptions.Budget
+                              ? BrandColors.BudgetDark
+                              : BrandColors.AvisDark,
+                          backgroundColor:
+                            selectedBrand === BrandOptions.Budget
+                              ? BrandColors.Budget
+                              : BrandColors.AvisDark,
+                          color: "#fff",
+                          justifyContent: "flex-end"
+                        }
+                      }}
+                    >
+                      Uygun Bul
                     </Button>
                   </form>
                 ) : (
@@ -643,33 +767,33 @@ const LeadsDetail: React.FC = () => {
                     onClick={handleNext}
                     sx={{
                       m: 1,
-                      width: '25px',
-                      borderColor: 'GrayText',
-                      '&:hover': {
+                      width: "25px",
+                      borderColor: "GrayText",
+                      "&:hover": {
                         borderColor:
                           selectedBrand === BrandOptions.Budget
                             ? BrandColors.Budget
                             : BrandColors.AvisDark,
-                        cursor: 'pointer',
+                        cursor: "pointer"
                       },
-                      '&:active': {
-                        color: 'dark',
-                      },
+                      "&:active": {
+                        color: "dark"
+                      }
                     }}
                   >
                     <KeyboardDoubleArrowRightRounded
                       sx={{
                         color: btnColor,
-                        '&:hover': {
+                        "&:hover": {
                           color:
                             selectedBrand === BrandOptions.Budget
                               ? BrandColors.Budget
                               : BrandColors.AvisDark,
-                          cursor: 'pointer',
+                          cursor: "pointer"
                         },
-                        '&:active': {
-                          color: 'dark',
-                        },
+                        "&:active": {
+                          color: "dark"
+                        }
                       }}
                     />
                   </Button>
@@ -681,7 +805,6 @@ const LeadsDetail: React.FC = () => {
       )}
     </Container>
   );
-
 };
 
 export default LeadsDetail;

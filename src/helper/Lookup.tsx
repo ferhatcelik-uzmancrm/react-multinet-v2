@@ -249,8 +249,8 @@ interface GenericAutocompleteProps {
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
-  isMulti?: boolean; // Çoklu seçim opsiyonel
-  filterParams?: Record<string, any>; // Filtre parametreleri
+  isMulti?: boolean;
+  filterParams?: Record<string, any> | null;
 }
 
 const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
@@ -270,16 +270,46 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  const [hasFocus, setHasFocus] = useState(false); // Kullanıcının alana odaklanıp odaklanmadığını takip edin.
-  const [hasFetchedOnce, setHasFetchedOnce] = useState(false); // Kullanıcı tıkladığında bir kez istek atmayı kontrol eder
+  const [hasFocus, setHasFocus] = useState(false);
+
+  // Ensure selectedValue is always an array when isMulti is true
+  const normalizedValue = useMemo(() => {
+    if (isMulti) {
+      // If it's multi-select, ensure we have an array
+      if (Array.isArray(selectedValue)) {
+        return selectedValue.filter(item => Boolean(item?.Id));
+      } else {
+        // It's a single object but we're in multi mode
+        const singleValue = selectedValue as LookupOptionType | null;
+        return singleValue && singleValue.Id ? [singleValue] : [];
+      }
+    } else {
+      // If it's single-select, return as is (but null if it's an empty object)
+      const singleValue = selectedValue as LookupOptionType | null;
+      return singleValue && singleValue.Id ? singleValue : null;
+    }
+  }, [selectedValue, isMulti]);
 
   const handleBlur = () => {
-    if (required && (!selectedValue || (isMulti && (selectedValue as LookupOptionType[]).length === 0))) {
-      setLocalError(`${label} alanı zorunludur.`);
-    } else {
-      setLocalError(null);
+    if (required) {
+      if (isMulti) {
+        // For multi-select, check if the array is empty
+        const valueArray = normalizedValue as LookupOptionType[];
+        if (!valueArray || valueArray.length === 0) {
+          setLocalError(`${label} alanı zorunludur.`);
+        } else {
+          setLocalError(null);
+        }
+      } else {
+        // For single-select, check if value is null
+        if (!normalizedValue) {
+          setLocalError(`${label} alanı zorunludur.`);
+        } else {
+          setLocalError(null);
+        }
+      }
     }
-    setHasFocus(false); // Odak kaybolduğunda focus durumunu sıfırla
+    setHasFocus(false);
   };
 
   const requestParams = useMemo(() => ({
@@ -287,71 +317,92 @@ const GenericAutocomplete: React.FC<GenericAutocompleteProps> = ({
     CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
     UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
     Name: "",
-    Filter: filterParams ? filterParams : {} // Filter null gelmesini engeller, boş nesne gönderir.
+    Filter: filterParams ? filterParams : {}
   }), [filterParams]);
 
   const fetchData = async (query: string) => {
     try {
       setLoading(true);
-      console.log("Error fetching data:", filterParams);
-      const response = await getCRMData(apiEndpoint, { ...requestParams, Filter: filterParams, Name: query });
-      setOptions(response.data);
+      
+      // Timeout mechanism
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      // Race the API request against the timeout
+      const response = await Promise.race([
+        getCRMData(apiEndpoint, { 
+          ...requestParams, 
+          Filter: filterParams || {}, 
+          Name: query 
+        }),
+        timeoutPromise
+      ]);
+      
+      // Type assertion to handle the response
+      const apiResponse = response as AxiosResponse;
+      setOptions(apiResponse?.data || []); 
     } catch (error) {
       console.error("Error fetching data:", error);
+      setOptions([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
-  const debouncedFetch = debounce((value: string) => {
-    if (value.length >= 3) {
-      fetchData(value);
-    } else {
-      setOptions([]);
-    }
-  }, 500);
+  const debouncedFetch = useMemo(
+    () => debounce((value: string) => {
+      if (value.length >= 3) {
+        fetchData(value);
+      } else {
+        setOptions([]);
+      }
+    }, 500),
+    [fetchData]
+  );
 
   const handleFocus = () => {
-    setHasFocus(true); // Odaklandığında true
+    setHasFocus(true);
   };
 
   useEffect(() => {
+    // Only fetch when focused and input has at least 3 characters
     if (hasFocus && inputValue.length >= 3) {
       debouncedFetch(inputValue);
     }
-    // Filter params değiştiğinde listeyi güncelle
+    
+    // Update list when filter params change
     if (filterParams && inputValue.length >= 3) {
       fetchData(inputValue);
     }
-  }, [filterParams, hasFocus, inputValue, debouncedFetch]);
-
-  useEffect(() => {
-    // Alana yazma veya odaklanma durumlarını yönet
-    if (hasFocus && inputValue.length >= 3) {
-      debouncedFetch(inputValue);
-    }
-    // Kullanıcı değeri sildiğinde listeyi sıfırla
+    
+    // Reset list when input is cleared
     if (inputValue === "") {
       setOptions([]);
-      setLoading(false); // Gereksiz loading göstergesini durdur
     }
+    
+    // Cleanup function
     return () => {
       debouncedFetch.cancel();
     };
-  }, [inputValue, hasFocus, debouncedFetch]);
+  }, [filterParams, hasFocus, inputValue, debouncedFetch, fetchData]);
 
   return (
     <Autocomplete
       multiple={isMulti}
       options={options}
-      getOptionLabel={(option) => option.Name}
+      getOptionLabel={(option: LookupOptionType) => option?.Name || ''}
       onInputChange={(event, newInputValue) => {
-        setInputValue(newInputValue); // Yazılan değeri güncelle
+        setInputValue(newInputValue);
       }}
-      onFocus={handleFocus} // Kullanıcı alana odaklandığında
-      onBlur={handleBlur}   // Kullanıcı odak kaybettiğinde
-      isOptionEqualToValue={(option, value) => option.Id === value.Id}
-      value={selectedValue}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      isOptionEqualToValue={(option: LookupOptionType, value: LookupOptionType) => {
+        // Handle empty objects or objects with empty Id
+        if (!value || !value.Id) return false;
+        return option?.Id === value?.Id;
+      }}
+      value={normalizedValue}
       onChange={(event, value) => {
         if (onValueChange) {
           onValueChange(value);

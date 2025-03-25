@@ -96,11 +96,11 @@ const QuoteDetailsCreate: React.FC = () => {
     ProductId: { Id: "", Name: "", LogicalName:"" }, // productid
     UomId: { Id: "", Name: "", LogicalName:"" }, // uomid
     SettlementType: { Value: 0, Label: ""}, // new_settlementtype
-    IsProductOverridden: { Value: 0, Label: ""}, // isproductoverridden
-    OutSourcing: { Value: 0, Label: ""}, // rms_outsourcing
+    IsProductOverridden: false, // isproductoverridden
+    OutSourcing: false, // rms_outsourcing
     UsageTypeCode: { Value: 0, Label: ""}, // rms_usagetypecode
     ServiceCostMonthCode: { Value: 0, Label: ""}, // rms_servicecostmonthcode
-    IsUpdated: { Value: 0, Label: ""}, // rms_isupdated
+    IsUpdated: false, // rms_isupdated
   });
 
 
@@ -306,7 +306,7 @@ const QuoteDetailsCreate: React.FC = () => {
                 variant="outlined"
                 id="IsProductOverridden"
                 name="IsProductOverridden"
-                value={quotedetail.IsProductOverridden.Value}
+                value={Number(quotedetail.IsProductOverridden)}
                 onChange={handleInputChange}
               >
                 <MenuItem value="">---</MenuItem>
@@ -322,7 +322,7 @@ const QuoteDetailsCreate: React.FC = () => {
                 variant="outlined"
                 id="OutSourcing"
                 name="OutSourcing"
-                value={quotedetail.OutSourcing.Value}
+                value={Number(quotedetail.OutSourcing)}
                 onChange={handleInputChange}
               >
                 <MenuItem value="">---</MenuItem>

@@ -25,12 +25,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import { fakeCompanyData } from "../../fake/fakeCompanyData";
 import { handleExport } from "../../helper/Export";
-import { Offer, OfferRequest } from "../../models/Offers";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
 import Pagination from '../../helper/Pagination';
-import { SalesOrder } from '../../models/SalesOrder';
+import { BranchInformation } from '../../models/BranchInformation';
+import { OfferRequest } from '../../models/Offers';
 
 type Order = "asc" | "desc";
 
@@ -71,15 +70,14 @@ function stableSort<T>(
     return stabilizedThis.map((el) => el[0]);
 }
 
-export default function SalesOrderTable() {
+export default function BranchInformationTable() {
 
-    const { selectedBrand, updateIsAccount } = useAppContext()  //Get selected brand
+    const { selectedBrand } = useAppContext()  //Get selected brand
 
     const navigate = useNavigate();
 
     const handleArchiveClick = (companyId: string) => {
-        navigate(`/salesorders/detail/${companyId}`);
-        /*, { state: { data: matchedData } });*/
+        navigate(`/branchinformation/detail/${companyId}`);
     };
     
 
@@ -87,15 +85,15 @@ export default function SalesOrderTable() {
     const [selected, setSelected] = useState<readonly string[]>([]);
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [salesOrder, setSalesOrder] = useState<SalesOrder[] | null>([]);
+    const [branchInformation, setBranchInformation] = useState<BranchInformation[] | null>([]);
     const [loading, setLoading] = useState(false)
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [paginatedData, setPaginatedData] = useState<SalesOrder[] | null>([]);
+    const [paginatedData, setPaginatedData] = useState<BranchInformation[] | null>([]);
     const [itemsPerPage] = useState<number>(10);
-    const totalPages = salesOrder ? Math.ceil(salesOrder.length / itemsPerPage) : 0;
+    const totalPages = branchInformation ? Math.ceil(branchInformation.length / itemsPerPage) : 0;
 
     const handleSearchInputChange = (
         event: React.ChangeEvent<HTMLInputElement>
@@ -104,7 +102,7 @@ export default function SalesOrderTable() {
         setCurrentPage(1);
     };
 
-    const salesOrderRequest = React.useMemo(() => ({
+    const branchInformationRequest = React.useMemo(() => ({
         UserId: sessionStorage.getItem("userid")?.toString() || "",
         CrmUserId: sessionStorage.getItem("crmuserid")?.toString() || "",
         UserCityId: sessionStorage.getItem("crmusercityid")?.toString() || "",
@@ -114,8 +112,8 @@ export default function SalesOrderTable() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await getCRMData('api/get-salesorderlist', salesOrderRequest);
-                setSalesOrder(response.data);
+                const response = await getCRMData('api/get-branchinformationlist', branchInformationRequest);
+                setBranchInformation(response.data);
             } catch (error) {
                 alert(error);
             }
@@ -125,27 +123,27 @@ export default function SalesOrderTable() {
 
     useEffect(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        const currentData = salesOrder?.slice(startIndex, startIndex + itemsPerPage) || [];
+        const currentData = branchInformation?.slice(startIndex, startIndex + itemsPerPage) || [];
         setPaginatedData(currentData);
-    }, [currentPage, salesOrder, itemsPerPage]);
+    }, [currentPage, branchInformation, itemsPerPage]);
 
     const handleApiSearch = async () => {
         try {
             setLoading(true)
             if (searchQuery !== null && searchQuery !== "") {
                 console.log("Search query: ", searchQuery);
-                setSalesOrder([]);
+                setBranchInformation([]);
 
-                const searchParams: OfferRequest = {
-                    ...salesOrderRequest,
+                const searchParams = {
+                    ...branchInformationRequest,
                     Name: searchQuery
                 };
 
                 const response = await getCRMData('api/search-salesorder', searchParams);
-                setSalesOrder(response.data);
+                setBranchInformation(response.data);
             } else {
                 const response = await fetchUserData('api/get-salesorder', '');
-                setSalesOrder(response.data);
+                setBranchInformation(response.data);
             }
         } catch (error) {
             alert(error);
@@ -155,12 +153,12 @@ export default function SalesOrderTable() {
         }
     };
 
-    const filteredRows = salesOrder !== null && Array.isArray(salesOrder)
-        ? salesOrder.filter((row) =>
-            (row.Name?.toString().includes(searchQuery)) ||
-            (row.ContractNumber?.toString().includes(searchQuery)) 
-            // ||
-            // row.QuoteApprovalStatus?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredRows = branchInformation !== null && Array.isArray(branchInformation)
+        ? branchInformation.filter((row) =>
+            (row.BranchName?.toString().includes(searchQuery)) ||
+            (row.AccountNumber?.toString().includes(searchQuery)) ||
+            (row.ReferenceBranchCode?.toString().includes(searchQuery)) ||
+            (row.BranchId?.toString().includes(searchQuery)) 
         ) : [];
 
     // 2. Arama sonuçlarını sayfalara böl
@@ -248,7 +246,7 @@ export default function SalesOrderTable() {
                 }}
             >
                 <FormControl sx={{ flex: 1 }} size="sm">
-                    <FormLabel>Sözleşme ara</FormLabel>
+                    <FormLabel>Şube ara</FormLabel>
                     <Input
                         size="md"
                         placeholder="Ara"
@@ -344,7 +342,7 @@ export default function SalesOrderTable() {
                                     checked={selected.length === paginatedRows.length}
                                     onChange={(event) => {
                                         setSelected(
-                                            event.target.checked ? paginatedRows.map((row) => row.SalesOrderId) : []
+                                            event.target.checked ? paginatedRows.map((row) => row.BranchInformationId) : []
                                         );
                                     }}
                                     color={
@@ -374,26 +372,27 @@ export default function SalesOrderTable() {
                                     Ad
                                 </Link>
                             </th>
-                            <th style={{ width: 220, padding: 12 }}>Sözleşme Numarası</th>
-                            <th style={{ width: 220, padding: 12 }}>Sözleşme Başlangıç Tarihi</th>
-                            <th style={{ width: 220, padding: 12 }}>Sözleşme Bitiş Tarihi</th>
-                            <th style={{ width: 220, padding: 12 }}>Sözleşme Türü</th>
+                            <th style={{ width: 220, padding: 12 }}>Firma Numarası</th>
+                            <th style={{ width: 220, padding: 12 }}>Şube No</th>
+                            <th style={{ width: 220, padding: 12 }}>Şube</th>
+                            <th style={{ width: 220, padding: 12 }}>ERP Kodu</th>
+                            <th style={{ width: 220, padding: 12 }}>Şube Tipi</th>
                             <th style={{ width: 120, padding: 12 }}> </th>
                         </tr>
                     </thead>
                     <tbody>
                         {paginatedRows !== null && Array.isArray(paginatedRows) ? (
-                            stableSort(paginatedRows, getComparator(order, "SalesOrderId")).map((row) => (
-                                <tr key={row.SalesOrderId}>
+                            stableSort(paginatedRows, getComparator(order, "BranchInformationId")).map((row) => (
+                                <tr key={row.BranchInformationId}>
                                     <td style={{ textAlign: "center" }}>
                                         <Checkbox
-                                            checked={selected.includes(row.SalesOrderId)}
-                                            color={selected.includes(row.SalesOrderId) ? "primary" : undefined}
+                                            checked={selected.includes(row.BranchInformationId)}
+                                            color={selected.includes(row.BranchInformationId) ? "primary" : undefined}
                                             onChange={(event) => {
                                                 setSelected((ids) =>
                                                     event.target.checked
-                                                        ? ids.concat(row.SalesOrderId)
-                                                        : ids.filter((itemId) => itemId !== row.SalesOrderId)
+                                                        ? ids.concat(row.BranchInformationId)
+                                                        : ids.filter((itemId) => itemId !== row.BranchInformationId)
                                                 );
                                             }}
                                             slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
@@ -401,18 +400,19 @@ export default function SalesOrderTable() {
                                         />
                                     </td>
                                     <td>
-                                        {row.Name}
+                                        {row.BranchName}
                                     </td>
-                                    <td>{row.ContractNumber}</td>
-                                    <td>{row.ContractStartDate ? new Date(row.ContractStartDate).toLocaleDateString() : "-"}</td>
-                                    <td>{row.ContractEndDate ? new Date(row.ContractEndDate).toLocaleDateString() : "-"}</td>
-                                    <td>{row.QuoteType.Label}</td>
+                                    <td>{row.AccountNumber}</td>
+                                    <td>{row.BranchId}</td>
+                                    <td>{row.AccountId?.Name}</td>
+                                    <td>{row.ErpCode?.Name}</td>
+                                    <td>{row.BranchType?.Label}</td>
                                     <td style={{ textAlign: "right" }}>
                                         <Link
                                             fontWeight="lg"
                                             component="button"
                                             color="neutral"
-                                            onClick={() => handleArchiveClick(row.SalesOrderId)}
+                                            onClick={() => handleArchiveClick(row.BranchInformationId)}
                                         >
                                             <EditNoteTwoTone sx={{ color: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.AvisDark }} />
                                         </Link>
@@ -421,7 +421,7 @@ export default function SalesOrderTable() {
                                             component="button"
                                             color="primary"
                                             sx={{ ml: 2 }}
-                                            onClick={() => handleExport([row], row.Name, "xlsx")}
+                                            onClick={() => handleExport([row], row.BranchName, "xlsx")}
                                         >
                                             <BrowserUpdatedTwoTone />
                                         </Link>
@@ -431,7 +431,7 @@ export default function SalesOrderTable() {
                         ) : (
                             <tr>
                                 <td colSpan={8} style={{ textAlign: "center" }}>
-                                    {salesOrder === null ? "Loading..." : "No matching contacts found."}
+                                    {branchInformation === null ? "Loading..." : "No matching contacts found."}
                                 </td>
                             </tr>
                         )}

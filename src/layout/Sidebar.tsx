@@ -1,5 +1,6 @@
 import {
   AlternateEmailTwoTone,
+  ApartmentTwoTone,
   BookOnlineTwoTone,
   BusinessTwoTone,
   DashboardCustomizeTwoTone,
@@ -11,6 +12,7 @@ import {
   InventoryTwoTone,
   LocalOfferTwoTone,
   MeetingRoomTwoTone,
+  OpenInNewRounded,
   PhoneInTalkTwoTone,
   ProductionQuantityLimitsTwoTone,
   TipsAndUpdatesTwoTone,
@@ -48,6 +50,7 @@ import ScrollToTop from "../widgets/ScrollToTop";
 import Content  from "./Content";
 import QuoteDetails from "../components/quotedetails/QuoteDetails";
 import Dashboards from "../components/dashboards/Dashboards";
+import SalesOrder from "../components/salesorders/SalesOrder";
 
 const drawerWidth = 240;
 
@@ -254,6 +257,18 @@ const Sidebar = () => {
               path: "/quotedetails",
               icon: <InventoryTwoTone   />,
               component: QuoteDetails,
+            },
+            {
+              text: "Sözleşmeler",
+              path: "/salesorders",
+              icon: <OpenInNewRounded   />,
+              component: SalesOrder,
+            },
+            {
+              text: "Şubeler",
+              path: "/branchinformation",
+              icon: <ApartmentTwoTone   />,
+              component: SalesOrder,
             },
           ].map((item) => (
             <React.Fragment key={item.text}>

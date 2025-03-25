@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@emotion/react";
 import { KeyboardDoubleArrowLeftRounded, KeyboardDoubleArrowRightRounded } from "@mui/icons-material";
 import { Box, Button, Container, Grid, Step, StepLabel, Stepper, MenuItem, TextField, Typography, createTheme } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
@@ -24,8 +24,7 @@ const InterestedProductsCreate: React.FC = () => {
     const { selectedBrand } = useAppContext();
     const location = useLocation();
     const navigate = useNavigate();
-    const stateData = location.state?.data || [];
-    console.log(stateData);
+    const { leadId, leadidname } = location.state || {};
     const steps = ['', ''];
     const [alertState, setAlertState] = useState({
         message: '',
@@ -116,6 +115,19 @@ const InterestedProductsCreate: React.FC = () => {
             }));
         }
     };
+    useEffect(() => {
+        // Direkt olarak navigation state'inden gelen bilgileri kullanıyoruz
+        if (leadId) {
+          setInterestedProduct(prev => ({
+            ...prev,
+            LeadId: {
+              Id: leadId,
+              Name: leadidname || '',
+              LogicalName: 'lead' // veya sisteminizde kullanılan logical name
+            }
+          }));
+        }
+      }, []);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -124,7 +136,6 @@ const InterestedProductsCreate: React.FC = () => {
             'Name',
             'MainProductId',
             'ProductGroupId',
-            'OpportunityId',
             'ProductId'
         ];
 
@@ -160,21 +171,99 @@ const InterestedProductsCreate: React.FC = () => {
             });
             return;
         }
-
-        console.log('Form submitted successfully', interestedProduct);
-
-
         setLoading(true)
 
         try {
-            await sendRequest("api/upsert-interestedproduct", interestedProduct)
+            const formattedInterestedProduct = {
+                // Kullanılacak Guid formatı
+                InterestedProductId: interestedProduct.InterestedProductId || "00000000-0000-0000-0000-000000000000",
+                
+                // Temel bilgiler
+                Name: interestedProduct.Name,
+                Description: interestedProduct.Description,
+                
+                // Lookup alanları - her biri için Id kontrolü
+                LeadId: interestedProduct.LeadId?.Id ? 
+                  {
+                    Id: interestedProduct.LeadId.Id,
+                    Name: interestedProduct.LeadId.Name,
+                    LogicalName: interestedProduct.LeadId.LogicalName
+                  } : null,
+                
+                AccountId: interestedProduct.AccountId?.Id ? 
+                  {
+                    Id: interestedProduct.AccountId.Id,
+                    Name: interestedProduct.AccountId.Name,
+                    LogicalName: interestedProduct.AccountId.LogicalName
+                  } : null,
+                
+                OpportunityId: interestedProduct.OpportunityId?.Id ? 
+                  {
+                    Id: interestedProduct.OpportunityId.Id,
+                    Name: interestedProduct.OpportunityId.Name,
+                    LogicalName: interestedProduct.OpportunityId.LogicalName
+                  } : null,
+                
+                ContractId: interestedProduct.ContractId?.Id ? 
+                  {
+                    Id: interestedProduct.ContractId.Id,
+                    Name: interestedProduct.ContractId.Name,
+                    LogicalName: interestedProduct.ContractId.LogicalName
+                  } : null,
+                
+                QuoteId: interestedProduct.QuoteId?.Id ? 
+                  {
+                    Id: interestedProduct.QuoteId.Id,
+                    Name: interestedProduct.QuoteId.Name,
+                    LogicalName: interestedProduct.QuoteId.LogicalName
+                  } : null,
+                
+                ProductGroupId: interestedProduct.ProductGroupId?.Id ? 
+                  {
+                    Id: interestedProduct.ProductGroupId.Id,
+                    Name: interestedProduct.ProductGroupId.Name,
+                    LogicalName: interestedProduct.ProductGroupId.LogicalName
+                  } : null,
+                
+                MainProductId: interestedProduct.MainProductId?.Id ? 
+                  {
+                    Id: interestedProduct.MainProductId.Id,
+                    Name: interestedProduct.MainProductId.Name,
+                    LogicalName: interestedProduct.MainProductId.LogicalName
+                  } : null,
+                
+                ProductId: interestedProduct.ProductId?.Id ? 
+                  {
+                    Id: interestedProduct.ProductId.Id,
+                    Name: interestedProduct.ProductId.Name,
+                    LogicalName: interestedProduct.ProductId.LogicalName
+                  } : null,
+                
+                // Boolean değeri
+                IsCustomerOrMember: interestedProduct.IsCustomerOrMember === true,
+                
+                // Sayısal değerler - null yerine 0 kullanılıyor
+                SelfOwnedVehicleNumber: interestedProduct.SelfOwnedVehicleNumber || null,
+                NumberLeasedCar: interestedProduct.NumberLeasedCar || null,
+                VehiclesRequested: interestedProduct.VehiclesRequested || null,
+                RequestedRentalTime: interestedProduct.RequestedRentalTime || null,
+                
+                // Sistem kullanıcı referansları
+                OwnerId: interestedProduct.OwnerId || "00000000-0000-0000-0000-000000000000",
+                
+                // Tarih değerleri - API'nin beklediği formatta
+                CreatedOn: interestedProduct.CreatedOn ? new Date(interestedProduct.CreatedOn).toISOString() : null,
+                ModifiedOn: interestedProduct.ModifiedOn ? new Date(interestedProduct.ModifiedOn).toISOString() : null
+              };
+
+            await sendRequest("api/upsert-interestedproduct", formattedInterestedProduct)
                 .then(response => {
                     const createdId = response.data?.InterestedProductId; 
                     if (createdId) {
                         navigate(`/interestedproducts/detail/${createdId}`);
                     }
                     setAlertState({
-                        message: "Interested product successfully!",
+                        message: "Ürün kaydedildi!",
                         type: 'success',
                         position: 'bottom-right',
                         showProgress: true,
@@ -232,21 +321,30 @@ const InterestedProductsCreate: React.FC = () => {
         setActiveStep(0);
     };
 
-    const handleSelectFieldChange2 = (fieldName: string) =>
-        (value: LookupOptionType | LookupOptionType[] | null) => {
+    const handleSelectFieldChange2 = (fieldName: string) => 
+        (value: LookupOptionType | LookupOptionType[] | null, event?: React.SyntheticEvent) => {
+            // Event propagation'ı durdur
+            if (event) {
+                event.stopPropagation();
+            }
+            
             if (Array.isArray(value)) {
-                // Çoklu seçim modunda
-                const selectedIds = value.map(option => option.Id).join(', ');
-                const selectedNames = value.map(option => option.Name).join(', ');
+                // Çoklu seçim modunda, string birleştirme yerine array olarak sakla
                 setInterestedProduct(prev => ({
                     ...prev,
-                    [fieldName]: { Id: selectedIds, Name: selectedNames }
+                    [fieldName]: { 
+                        Id: value.map(option => option.Id), 
+                        Name: value.map(option => option.Name)
+                    }
                 }));
             } else {
                 // Tekli seçim modunda
                 setInterestedProduct(prev => ({
                     ...prev,
-                    [fieldName]: { Id: value ? value.Id : "", Name: value ? value.Name : "" }
+                    [fieldName]: { 
+                        Id: value ? value.Id : "", 
+                        Name: value ? value.Name : "" 
+                    }
                 }));
             }
         };

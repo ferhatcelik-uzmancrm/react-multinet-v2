@@ -78,12 +78,12 @@ const EmailsDetail: React.FC = () => {
     Subject: "",
     Message: "",
     From: { Id: "", Name: "" , LogicalName: ""},
-    To: [], // Initialize as an empty array for multiple recipients
-    Cc: [], // Initialize as an empty array for CC recipients
-    Bcc: [], // Initialize as an empty array for BCC recipients
+    To: { Id: "", Name: "" , LogicalName: ""}, // Initialize as an empty array for multiple recipients
+    Cc: { Id: "", Name: "" , LogicalName: ""}, // Initialize as an empty array for CC recipients
+    Bcc: { Id: "", Name: "" , LogicalName: ""}, // Initialize as an empty array for BCC recipients
     IsMultiNetActivity: false,
     RegardingObjectId: { Id: "", Name: "", LogicalName:"" },
-    ActualDurationMinutes: null, // Initialize as null
+    // ActualDurationMinutes: { Value: 0, Label: "",  } 
   });
 
 

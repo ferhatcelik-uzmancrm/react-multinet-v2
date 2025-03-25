@@ -1,5 +1,9 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import { BrowserUpdatedTwoTone, EditNoteTwoTone, TravelExploreTwoTone } from '@mui/icons-material/';
+import {
+  BrowserUpdatedTwoTone,
+  EditNoteTwoTone,
+  TravelExploreTwoTone
+} from "@mui/icons-material/";
 import { CircularProgress } from "@mui/joy";
 import Box from "@mui/joy/Box";
 import Button from "@mui/joy/Button";
@@ -8,7 +12,7 @@ import Chip from "@mui/joy/Chip";
 import Divider from "@mui/joy/Divider";
 import FormControl from "@mui/joy/FormControl";
 import IconButton, { iconButtonClasses } from "@mui/joy/IconButton";
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Input from "@mui/joy/Input";
 import Link from "@mui/joy/Link";
 import Modal from "@mui/joy/Modal";
@@ -29,10 +33,11 @@ import { handleExport } from "../../helper/Export";
 import DataTable from "../../helper/DataTable";
 import { Lead, LeadRequest } from "../../models/Lead";
 import { fetchUserData, getCRMData } from "../../requests/ApiCall";
+import Pagination from "../../helper/Pagination";
 
 type Order = "asc" | "desc";
 
-const rows = fakeCompanyData
+const rows = fakeCompanyData;
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -76,21 +81,30 @@ const useSessionValues = () => {
   return {
     userid: sessionStorage.getItem("username")?.toString() || "",
     crmuserid: sessionStorage.getItem("crmuserid")?.toString() || "",
-    usercityid: sessionStorage.getItem("crmusercityid")?.toString() || "",
+    usercityid: sessionStorage.getItem("crmusercityid")?.toString() || ""
   };
 };
 
 export default function LeadsTable() {
-
-  const { selectedBrand, updateIsAccount } = useAppContext()  //Get selected brand
+  const { selectedBrand, updateIsAccount } = useAppContext(); //Get selected brand
   const sessionValues = useSessionValues();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [order, setOrder] = useState<Order>("desc");
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [leads, setLeads] = useState<Lead[] | null>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [paginatedData, setPaginatedData] = useState<Lead[] | null>([]);
+  const [itemsPerPage] = useState<number>(10);
+  const totalPages = leads ? Math.ceil(leads.length / itemsPerPage) : 0;
 
   const handleArchiveClick = (companyId: string, companyType: string) => {
-    if (companyType === 'Account')
-      updateIsAccount(true);
-    else
-      updateIsAccount(false);
+    if (companyType === "Account") updateIsAccount(true);
+    else updateIsAccount(false);
     // const matchedData = rows.filter(row => row.id === companyId);
     navigate(`/leads/detail/${companyId}`);
     /*, { state: { data: matchedData } });*/
@@ -100,16 +114,6 @@ export default function LeadsTable() {
     navigate(`/leads/create/`);
   };
 
-  const [order, setOrder] = useState<Order>("desc");
-  const [selected, setSelected] = useState<readonly string[]>([]);
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [leads, setLeads] = useState<Lead[] | null>([]);
-  const [loading, setLoading] = useState(false)
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const handleSearchInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -117,27 +121,36 @@ export default function LeadsTable() {
     console.log(searchQuery);
   };
 
-  const leadRequest = useMemo(() => ({
-    ...sessionValues,
-    new_taxnumber: "",
-    name: ""
-  }), [sessionValues.userid, sessionValues.crmuserid, sessionValues.usercityid]);
+  const leadRequest = useMemo(
+    () => ({
+      ...sessionValues,
+      new_taxnumber: "",
+      name: ""
+    }),
+    [sessionValues.userid, sessionValues.crmuserid, sessionValues.usercityid]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getCRMData('api/get-leads', leadRequest);
+        const response = await getCRMData("api/get-leads", leadRequest);
         setLeads(response.data);
       } catch (error) {
-        console.error('Veri çekme hatası:', error);
+        console.error("Veri çekme hatası:", error);
       }
     };
     fetchData();
-  }, [leadRequest]);
+  }, []);
+
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentData = leads?.slice(startIndex, startIndex + itemsPerPage) || [];
+    setPaginatedData(currentData);
+  }, [currentPage, leads, itemsPerPage]);
 
   const handleApiSearch = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       if (searchQuery !== null && searchQuery !== "") {
         console.log("Search query: ", searchQuery);
         setLeads([]);
@@ -147,83 +160,80 @@ export default function LeadsTable() {
 
         const searchParams: LeadRequest = {
           ...leadRequest,
-          new_taxnumber: isTaxNumber ? searchQuery : '',
-          name: !isTaxNumber ? searchQuery : '',
+          new_taxnumber: isTaxNumber ? searchQuery : "",
+          name: !isTaxNumber ? searchQuery : ""
         };
 
-        const response = await getCRMData('api/search-leads', searchParams);
+        const response = await getCRMData("api/search-leads", searchParams);
         setLeads(response.data);
       } else {
-        const response = await fetchUserData('api/get-company', '');
+        const response = await fetchUserData("api/get-company", "");
         setLeads(response.data);
       }
     } catch (error) {
       alert(error);
-    }
-    finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredRows = leads !== null && Array.isArray(leads)
-    ? leads.filter((row) =>
-      row.companyname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (row.telephone1?.toString().includes(searchQuery)) ||
-      row.emailaddress3?.toLowerCase().includes(searchQuery.toLowerCase())
-    ) : [];
-
+  const filteredRows =
+    leads !== null && Array.isArray(leads)
+      ? leads.filter(
+          (row) =>
+            row.companyname
+              ?.toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            row.telephone1?.toString().includes(searchQuery) ||
+            row.emailaddress3?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [];
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'companyname', headerName: 'Marka Adı', width: 130 },
-    { field: 'telephone1', headerName: 'Firma Telefon', width: 130 },
-    { field: 'emailaddress3', headerName: 'Firma E-posta', width: 130 },
+    { field: "id", headerName: "ID", width: 70 },
+    { field: "companyname", headerName: "Marka Adı", width: 130 },
+    { field: "telephone1", headerName: "Firma Telefon", width: 130 },
+    { field: "emailaddress3", headerName: "Firma E-posta", width: 130 }
   ];
 
+  const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const renderFilters = () => (
     <React.Fragment>
-      <FormControl size="sm">
-        {/* <FormLabel>Durum</FormLabel>
-        <Select
-          size="md"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: "nowrap" } } }}
-        >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Kategori</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl>
-
-      <FormControl size="sm">
-        {/* <FormLabel>Müşteri</FormLabel>
-        <Select size="md" placeholder="All">
-          <Option value="all">All</Option>
-        </Select> */}
-      </FormControl>
+      <FormControl sx={{ flex: 0 }} size="sm">
+          {/* <FormLabel>Potansiyel Müşteri Oluştur</FormLabel> */}
+          <MaterialButton
+            variant="contained"
+            sx={{
+              border: "none",
+              textTransform: "capitalize",
+              color: "white",
+              backgroundColor: "#211d3c",
+              fontSize: "16px",
+              "&:hover": {
+                backgroundColor: "#f7a724"
+              }
+            }}
+            disabled={loading}
+            onClick={createClick}
+          >
+            Yeni Müşteri
+          </MaterialButton>
+        </FormControl>
     </React.Fragment>
   );
 
   return (
-    <React.Fragment >
+    <React.Fragment>
       <Sheet
         className="SearchAndFilters-mobile"
         sx={{
           display: {
             xs: "flex",
-            sm: "none",
+            sm: "none"
           },
           my: 1,
-          gap: 1,
+          gap: 1
         }}
       >
         <Input
@@ -236,11 +246,11 @@ export default function LeadsTable() {
               sx={{
                 "&:hover": {
                   color: "primary.main",
-                  cursor: "pointer",
+                  cursor: "pointer"
                 },
                 "&:active": {
-                  color: "primary.dark",
-                },
+                  color: "primary.dark"
+                }
               }}
             />
           }
@@ -259,15 +269,11 @@ export default function LeadsTable() {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog aria-labelledby="filter-modal" layout="fullscreen">
             <ModalClose />
-            <Typography id="filter-modal" level="h2">
-              Filters
-            </Typography>
+            
             <Divider sx={{ my: 2 }} />
             <Sheet sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {renderFilters()}
-              <Button color="primary" onClick={() => setOpen(false)}>
-                Submit
-              </Button>
+              
             </Sheet>
           </ModalDialog>
         </Modal>
@@ -279,16 +285,16 @@ export default function LeadsTable() {
           py: 2,
           display: {
             xs: "none",
-            sm: "flex",
+            sm: "flex"
           },
           flexWrap: "wrap",
           gap: 1.5,
           "& > *": {
             minWidth: {
               xs: "120px",
-              md: "160px",
-            },
-          },
+              md: "160px"
+            }
+          }
         }}
       >
         <FormControl sx={{ flex: 1 }} size="sm">
@@ -298,32 +304,39 @@ export default function LeadsTable() {
             placeholder="Ara"
             startDecorator={<i data-feather="search" />}
             endDecorator={
-              loading ?
-                (<CircularProgress color="danger" sx={{ '--CircularProgress-size': '30px' }} thickness={1}>
+              loading ? (
+                <CircularProgress
+                  color="danger"
+                  sx={{ "--CircularProgress-size": "30px" }}
+                  thickness={1}
+                >
                   <TravelExploreTwoTone
                     onClick={handleApiSearch}
                     sx={{
                       "&:hover": {
                         color: "primary.main",
-                        cursor: "pointer",
+                        cursor: "pointer"
                       },
                       "&:active": {
-                        color: "primary.dark",
-                      },
+                        color: "primary.dark"
+                      }
                     }}
                   />
-                </CircularProgress>) : (<TravelExploreTwoTone
+                </CircularProgress>
+              ) : (
+                <TravelExploreTwoTone
                   onClick={handleApiSearch}
                   sx={{
                     "&:hover": {
                       color: "primary.main",
-                      cursor: "pointer",
+                      cursor: "pointer"
                     },
                     "&:active": {
-                      color: "primary.dark",
-                    },
+                      color: "primary.dark"
+                    }
                   }}
-                />)
+                />
+              )
             }
             value={searchQuery}
             onChange={handleSearchInputChange}
@@ -332,27 +345,7 @@ export default function LeadsTable() {
 
         {renderFilters()}
 
-        <FormControl sx={{ flex: 0 }} size="sm">
-          {/* <FormLabel>Potansiyel Müşteri Oluştur</FormLabel> */}
-          <MaterialButton
-            variant="contained"
-            sx={{
-              border: "none",
-              textTransform: "capitalize",
-              color: "white",
-              backgroundColor: "#211d3c",
-              fontSize: "16px",
-              "&:hover": {
-                backgroundColor: "#f7a724",
-              },
-            }}
-            disabled={loading}
-            onClick={createClick}
-          >
-            Yeni Müşteri
-          </MaterialButton>
-        </FormControl>
-
+        
       </Box>
       {/* <DataTable rows={filteredRows} columns={columns} /> */}
       <Sheet
@@ -370,20 +363,20 @@ export default function LeadsTable() {
             scrollbarWidth: "thin",
             border: "1px solid #ddd",
             "&::-webkit-scrollbar": {
-              width: "8px",
+              width: "8px"
             },
             "&::-webkit-scrollbar-thumb": {
               background: "#888",
-              borderRadius: "5px",
+              borderRadius: "5px"
             },
             "&::-webkit-scrollbar-thumb:hover": {
-              background: "#555",
+              background: "#555"
             },
             "&::-webkit-scrollbar-track": {
               background: "#f1f1f1",
-              borderRadius: "5px",
-            },
-          },
+              borderRadius: "5px"
+            }
+          }
         }}
       >
         <Table
@@ -397,6 +390,7 @@ export default function LeadsTable() {
             "--TableRow-hoverBackground": (theme) =>
               theme.vars.palette.background.level1,
             "--TableCell-paddingY": "12px",
+            tableLayout: "auto"
           }}
         >
           <thead>
@@ -432,8 +426,8 @@ export default function LeadsTable() {
                     "& svg": {
                       transition: "0.2s",
                       transform:
-                        order === "desc" ? "rotate(0deg)" : "rotate(180deg)",
-                    },
+                        order === "desc" ? "rotate(0deg)" : "rotate(180deg)"
+                    }
                   }}
                 >
                   Firma Adı
@@ -447,27 +441,30 @@ export default function LeadsTable() {
             </tr>
           </thead>
           <tbody>
-            {leads !== null && Array.isArray(leads) ? (
-              stableSort(filteredRows, getComparator(order, "id")).map((row) => (
-                <tr key={row.id}>
-                  <td style={{ textAlign: "center" }}>
-                    <Checkbox
-                      checked={selected.includes(row.id)}
-                      color={selected.includes(row.id) ? "primary" : undefined}
-                      onChange={(event) => {
-                        setSelected((ids) =>
-                          event.target.checked
-                            ? ids.concat(row.id)
-                            : ids.filter((itemId) => itemId !== row.id)
-                        );
-                      }}
-                      slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
-                      sx={{ verticalAlign: "text-bottom" }}
-                    />
-                  </td>
-                  <td>
-                    <Typography fontWeight="md">
-                      {/* Chip
+            {paginatedRows !== null && Array.isArray(paginatedRows) ? (
+              stableSort(paginatedRows, getComparator(order, "id")).map(
+                (row) => (
+                  <tr key={row.id}>
+                    <td style={{ textAlign: "center" }}>
+                      <Checkbox
+                        checked={selected.includes(row.id)}
+                        color={
+                          selected.includes(row.id) ? "primary" : undefined
+                        }
+                        onChange={(event) => {
+                          setSelected((ids) =>
+                            event.target.checked
+                              ? ids.concat(row.id)
+                              : ids.filter((itemId) => itemId !== row.id)
+                          );
+                        }}
+                        slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
+                        sx={{ verticalAlign: "text-bottom" }}
+                      />
+                    </td>
+                    <td>
+                      <Typography fontWeight="md">
+                        {/* Chip
                         variant="soft"
                         size="sm"
                         startDecorator={
@@ -486,125 +483,77 @@ export default function LeadsTable() {
                         }
                       >{row.companyname}
                       </Chip> */}
-                      <Chip
-                        variant="soft"
-                        size="sm"
-                        startDecorator={
-                          {
-                            Contact: <i data-feather="check" />,
-                            Account: <i data-feather="corner-up-left" />,
-                            Cancelled: <i data-feather="x" />,
-                          }[row.companyname]
+                        <Chip
+                          variant="soft"
+                          size="sm"
+                          startDecorator={
+                            {
+                              Contact: <i data-feather="check" />,
+                              Account: <i data-feather="corner-up-left" />,
+                              Cancelled: <i data-feather="x" />
+                            }[row.companyname]
+                          }
+                          color={"warning"}
+                        >
+                          {row.companyname}
+                        </Chip>
+                      </Typography>
+                    </td>
+                    {/* td>{row.companyname}</td */}
+                    <td>{row.companyname}</td>
+                    <td>{row.telephone1}</td>
+                    <td>{row.emailaddress3}</td>
+                    <td style={{ textAlign: "right" }}>
+                      <Link
+                        fontWeight="lg"
+                        component="button"
+                        color="neutral"
+                        onClick={() =>
+                          handleArchiveClick(row.id, row.companyname)
                         }
-                        color={"warning"}
-                      >{row.companyname}
-                      </Chip>
-                    </Typography>
-                  </td>
-                  {/* td>{row.companyname}</td */}
-                  <td>
-                    {row.companyname}
-                  </td>
-                  <td>{row.telephone1}</td>
-                  <td>{row.emailaddress3}</td>
-                  <td style={{ textAlign: "right" }}>
-                    <Link
-                      fontWeight="lg"
-                      component="button"
-                      color="neutral"
-                      onClick={() => handleArchiveClick(row.id, row.companyname)}
-                    >
-                      <EditNoteTwoTone sx={{ color: selectedBrand === BrandOptions.Budget ? BrandColors.BudgetDark : BrandColors.AvisDark }} />
-                    </Link>
-                    <Link
-                      fontWeight="lg"
-                      component="button"
-                      color="primary"
-                      sx={{ ml: 2 }}
-                      onClick={() => handleExport([row], row.companyname, "xlsx")}
-                    >
-                      <BrowserUpdatedTwoTone />
-                    </Link>
-                  </td>
-                </tr>
-              ))
+                      >
+                        <EditNoteTwoTone
+                          sx={{
+                            color:
+                              selectedBrand === BrandOptions.Budget
+                                ? BrandColors.BudgetDark
+                                : BrandColors.AvisDark
+                          }}
+                        />
+                      </Link>
+                      <Link
+                        fontWeight="lg"
+                        component="button"
+                        color="primary"
+                        sx={{ ml: 2 }}
+                        onClick={() =>
+                          handleExport([row], row.companyname, "xlsx")
+                        }
+                      >
+                        <BrowserUpdatedTwoTone />
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              )
             ) : (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center" }}>
-                  {leads === null ? "Loading..." : "No matching contacts found."}
+                  {leads === null
+                    ? "Loading..."
+                    : "No matching contacts found."}
                 </td>
               </tr>
             )}
           </tbody>
         </Table>
       </Sheet>
-      <Box
-        className="Pagination-mobile"
-        sx={{ display: { xs: "flex", md: "none" }, alignItems: "center" }}
-      >
-        <IconButton
-          aria-label="previous page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-left" />
-        </IconButton>
-        <Typography level="body-sm" mx="auto">
-          Page 1 of 10
-        </Typography>
-        <IconButton
-          aria-label="next page"
-          variant="outlined"
-          color="neutral"
-          size="sm"
-        >
-          <i data-feather="arrow-right" />
-        </IconButton>
-      </Box>
-      <Box
-        className="Pagination-laptopUp"
-        sx={{
-          pt: 4,
-          gap: 1,
-          [`& .${iconButtonClasses.root}`]: { borderRadius: "50%" },
-          display: {
-            xs: "none",
-            md: "flex",
-          },
-        }}
-      >
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          startDecorator={<i data-feather="arrow-left" />}
-        >
-          Önceki
-        </Button>
-
-        <Box sx={{ flex: 1 }} />
-        {["1", "2", "3", "…", "8", "9", "10"].map((page) => (
-          <IconButton
-            key={page}
-            size="sm"
-            variant={Number(page) ? "outlined" : "plain"}
-            color="neutral"
-          >
-            {page}
-          </IconButton>
-        ))}
-        <Box sx={{ flex: 1 }} />
-
-        <Button
-          size="sm"
-          variant="plain"
-          color="neutral"
-          endDecorator={<i data-feather="arrow-right" />}
-        >
-          Sonraki
-        </Button>
-      </Box>
+      {/* Sayfalama */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </React.Fragment>
   );
 }

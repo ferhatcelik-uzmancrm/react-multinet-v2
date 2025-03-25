@@ -135,6 +135,26 @@ const AppRouter: React.FC = () => {
           <Route path="detail/:id" element={<LazyComponents.OffersDetail />} />
         </Route>
 
+        {/*SalesOrder */}
+        <Route path="/salesorders/*" element={
+          <Suspense fallback={LoadingFallback}>
+            <LazyComponents.SalesOrder />
+          </Suspense>
+        }>
+          <Route path="" element={<LazyComponents.SalesOrderTable />} />
+          <Route path="detail/:id" element={<LazyComponents.SalesOrderDetail />} /> 
+        </Route>
+
+        {/*BranchInformation */}
+        <Route path="/branchinformation/*" element={
+          <Suspense fallback={LoadingFallback}>
+            <LazyComponents.BranchInformations />
+          </Suspense>
+        }>
+          <Route path="" element={<LazyComponents.BranchInformationsTable />} />
+          <Route path="detail/:id" element={<LazyComponents.BranchInformationsDetail />} /> 
+        </Route>
+
         {/* QuoteDetails */}
         <Route path="/quotedetails/*" element={
           <Suspense fallback={LoadingFallback}>

@@ -62,6 +62,16 @@ export const OffersCreate = lazy(() => import('../components/offers/OffersCreate
 export const OffersDetail = lazy(() => import('../components/offers/OffersDetail'));
 export const OffersTable = lazy(() => import('../components/offers/OffersTable'));
 
+// SalesOrder
+export const SalesOrder = lazy(() => import('../components/salesorders/SalesOrder'));
+export const SalesOrderDetail = lazy(() => import('../components/salesorders/SalesOrderDetail'));
+export const SalesOrderTable = lazy(() => import('../components/salesorders/SalesOrderTable'));
+
+// BranchInformation
+export const BranchInformations = lazy(() => import('../components/branchinformation/BranchInformations'));
+export const BranchInformationsDetail = lazy(() => import('../components/branchinformation/BranchInformationsDetail'));
+export const BranchInformationsTable = lazy(() => import('../components/branchinformation/BranchInformationsTable'));
+
 // QuoteDetails
 export const QuoteDetails = lazy(() => import('../components/quotedetails/QuoteDetails'));
 export const QuoteDetailsCreate = lazy(() => import('../components/quotedetails/QuoteDetailsCreate'));

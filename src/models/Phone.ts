@@ -4,8 +4,8 @@ import { LookupValueModel } from "./shared/LookupValueModel";
 export interface Phone {
   PhoneId: string;
   Subject: string;
-  From: LookupValueModel[];
-  To: LookupValueModel[];
+  From: LookupValueModel;
+  To: LookupValueModel;
   RegardingObjectId: LookupValueModel;
   PhoneNumber: string;
   DirectionCode: boolean;

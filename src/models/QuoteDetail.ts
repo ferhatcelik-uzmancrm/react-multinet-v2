@@ -20,11 +20,11 @@ export interface QuoteDetail {
     ProductId: LookupValueModel; // productid
     UomId: LookupValueModel; // uomid
     SettlementType: OptionSetValueModel; // new_settlementtype
-    IsProductOverridden: OptionSetValueModel; // isproductoverridden
-    OutSourcing: OptionSetValueModel; // rms_outsourcing
+    IsProductOverridden: boolean; // isproductoverridden
+    OutSourcing: boolean; // rms_outsourcing
     UsageTypeCode: OptionSetValueModel; // rms_usagetypecode
     ServiceCostMonthCode: OptionSetValueModel; // rms_servicecostmonthcode
-    IsUpdated: OptionSetValueModel; // rms_isupdated
+    IsUpdated: boolean; // rms_isupdated
   };
 
   export type QuoteDetailRequest = {

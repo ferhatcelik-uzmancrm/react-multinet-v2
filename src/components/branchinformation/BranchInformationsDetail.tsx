@@ -1,30 +1,34 @@
-import { ThemeProvider } from "@emotion/react";
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import {
   KeyboardDoubleArrowLeftRounded,
-  KeyboardDoubleArrowRightRounded
-} from "@mui/icons-material";
+  KeyboardDoubleArrowRightRounded,
+} from "@mui/icons-material/";
+import Box from "@mui/joy/Box";
+import Button from "@mui/joy/Button";
+import Typography from "@mui/joy/Typography";
 import {
-  Box,
-  Button,
   Container,
   createTheme,
   Grid,
+  MenuItem,
   Step,
   StepLabel,
   Stepper,
   TextField,
-  Typography
+  ThemeProvider,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { useAppContext } from "../../contexts/AppContext";
 import { BrandColors, BrandOptions } from "../../enums/Enums";
-import { Email } from "../../models/Email";
 import { getCRMData, sendRequest } from "../../requests/ApiCall";
+import { LookupOptionType } from "../../models/shared/Lookup";
+import { OptionSetType } from "../../models/shared/OptionSetValueModel";
+import { GenericAutocomplete, OptionSet } from "../../helper/Lookup";
 import AlertComponent from "../../widgets/Alert";
 import Spinner from "../../widgets/Spinner";
-import { GenericAutocomplete } from "../../helper/Lookup";
-import { LookupOptionType } from "../../models/shared/Lookup";
+import { BranchInformation } from "../../models/BranchInformation";
 
 const gridItemSize = {
   xs: 12,
@@ -34,15 +38,12 @@ const gridItemSize = {
   xl: 6
 };
 
-const EmailsCreate: React.FC = () => {
+const BranchInformationsDetail: React.FC = () => {
   const { selectedBrand } = useAppContext();
+  const { id } = useParams();
   const location = useLocation();
-  const { leadId, leadidname } = location.state || {};
-  const user = {
-    Id: sessionStorage.getItem("crmuserid"),
-    Name: sessionStorage.getItem("crmusername")
-  };
-  const steps = [""];
+  const stateData = location.state?.data || [];
+  const steps = ["", ""];
   const [alertState, setAlertState] = useState({
     message: "",
     type: "success" as "success" | "danger",
@@ -59,7 +60,6 @@ const EmailsCreate: React.FC = () => {
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set<number>());
-
   const getByBrand = () => {
     switch (selectedBrand) {
       case BrandOptions.Avis:
@@ -92,61 +92,35 @@ const EmailsCreate: React.FC = () => {
     }
   });
 
-  const [email, setEmail] = useState<Email>({
-    EmailId: "",
-    Subject: "",
-    Message: "",
-    From: {
-      Id: user.Id || "",
-      Name: user.Name || "",
-      LogicalName: "systemuser"
-    },
-    To: { Id: "", Name: "", LogicalName: "" }, // Initialize as an empty array for multiple recipients
-    Cc: { Id: "", Name: "", LogicalName: "" }, // Initialize as an empty array for CC recipients
-    Bcc: { Id: "", Name: "", LogicalName: "" }, // Initialize as an empty array for BCC recipients
-    IsMultiNetActivity: false,
-    RegardingObjectId: { Id: "", Name: "", LogicalName: "" }
-    // ActualDurationMinutes: { Value: 0, Label: "" } // Initialize as null
-  });
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-
-    // const jsonString = JSON.stringify(value);
-    // console.log(value);
-    // console.log(jsonString);
-    setEmail((prevEmail) => ({
-      ...prevEmail,
-      [name]: value
-    }));
-
-    console.log("Error name: ", name);
-
-    if (errors[name]) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: false
-      }));
+  const [branchInformation, setBranchInformation] = useState<BranchInformation>(
+    {
+      BranchName: "", // rms_name
+      AccountId: { Id: "", Name: "", LogicalName: "" }, // rms_accountid
+      AccountNumber: "", // rms_accountnumber
+      ReferenceBranchCode: "", // rms_referencebranchcode
+      BranchId: "", // rms_branchid
+      BranchInformationId: "", // rms_branchinformationid (GUID)
+      RelatedCompany: { Id: "", Name: "", LogicalName: "" }, // rms_relatedaccountid
+      ErpCode: { Id: "", Name: "", LogicalName: "" }, // rms_erpcodeid
+      ContractType: false, // rms_isbranchbasedcontract
+      BranchType: { Value: 0, Label: "" }, // rms_branchtypecode
+      Description: "", // rms_description (Opsiyonel olarak belirttim, boş olabilir)
+      OwnerId: { Id: "", Name: "", LogicalName: "" } // ownerid
     }
-  };
+  );
 
   useEffect(() => {
-    // Direkt olarak navigation state'inden gelen bilgileri kullanıyoruz
-    if (leadId) {
-      setEmail((prev) => ({
-        ...prev,
-        RegardingObjectId: {
-          Id: leadId,
-          Name: leadidname || "",
-          LogicalName: "lead" // veya sisteminizde kullanılan logical name
-        },
-        To: {
-          Id: leadId,
-          Name: leadidname || "",
-          LogicalName: "lead" // veya sisteminizde kullanılan logical name
+    const fetchData = async () => {
+      try {
+        if (id) {
+          const response = await getCRMData("api/get-branchinformation-by-id", id);
+          setBranchInformation(response.data);
         }
-      }));
-    }
+      } catch (error) {
+        alert(error);
+      }
+    };
+    fetchData();
   }, []);
 
   const handleSelectFieldChange2 =
@@ -156,25 +130,16 @@ const EmailsCreate: React.FC = () => {
         // Çoklu seçim modunda
         const selectedIds = value.map((option) => option.Id).join(", ");
         const selectedNames = value.map((option) => option.Name).join(", ");
-        const logicalNames = value
-          .map((option) => option.LogicalName)
-          .join(", ");
-        setEmail((prev) => ({
+        setBranchInformation((prev) => ({
           ...prev,
-          [fieldName]: {
-            Id: selectedIds,
-            Name: selectedNames,
-            LogicalName: logicalNames
-          }
+          [fieldName]: { Id: selectedIds, Name: selectedNames }
         }));
       } else {
-        // Tekli seçim modunda
-        setEmail((prev) => ({
+        setBranchInformation((prev) => ({
           ...prev,
           [fieldName]: {
             Id: value ? value.Id : "",
-            Name: value ? value.Name : "",
-            LogicalName: value ? value.LogicalName : ""
+            Name: value ? value.Name : ""
           }
         }));
       }
@@ -182,59 +147,34 @@ const EmailsCreate: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const requiredFields = ["Subject"];
-
-    const newErrors: { [key: string]: boolean } = {};
-
-    requiredFields.forEach((field) => {
-      if (!email[field as keyof typeof email]) {
-        newErrors[field] = true;
-      }
-    });
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      setAlertState({
-        message: "Lütfen tüm zorunlu alanları doldurun.",
-        type: "danger",
-        position: "bottom-right",
-        showProgress: false,
-        isOpen: true
-      });
-      return;
-    }
-
+    // alert(JSON.stringify(lead))
     setLoading(true);
 
     try {
-      const formattedEmail = {
-        EmailId: email.EmailId || "00000000-0000-0000-0000-000000000000",
-        Subject: email.Subject,
-        From: email.From ? { Id: email.From, Name: email.From.Name, LogicalName: "systemuser" } : null,
-        To: email.To ? { Id: email.To, Name: email.To.Name, LogicalName: email.To.LogicalName } : null,
-        Cc: email.Cc ? { Id: email.Cc, Name: email.Cc.Name, LogicalName: email.Cc.LogicalName } : null,
-        Bcc: email.Bcc ? { Id: email.Bcc, Name: email.Bcc.Name, LogicalName: email.Bcc.LogicalName } : null,
-        IsMultiNetActivity: email.IsMultiNetActivity,
-        RegardingObjectId: email.RegardingObjectId 
-      };
-
-      // await sendRequest("api/upsert-email", formattedEmail);
-      // // Use your existing API method but with properly formatted data
-      const response = await getCRMData("api/upsert-email", formattedEmail);
-
-      setAlertState({
-        message: "Email başarıyla kaydedildi!",
-        type: "success",
-        position: "bottom-right",
-        showProgress: true,
-        isOpen: true
-      });
+      await sendRequest("api/create-offer", branchInformation)
+        .then((response) => {
+          setAlertState({
+            message: "Offer created successfully!",
+            type: "success",
+            position: "bottom-right",
+            showProgress: true,
+            isOpen: true
+          });
+        })
+        .catch((error) => {
+          console.error("Error creating offer:", error);
+          setAlertState({
+            message: "Error creating offer. Please try again.",
+            type: "danger",
+            position: "bottom-right",
+            showProgress: true,
+            isOpen: true
+          });
+        });
     } catch (error) {
       console.error("Error:", error);
       setAlertState({
-        message: "Email kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.",
+        message: "Error creating offer. Please try again.",
         type: "danger",
         position: "bottom-right",
         showProgress: true,
@@ -247,6 +187,41 @@ const EmailsCreate: React.FC = () => {
     // window.location.reload();
   };
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setBranchInformation((prevLead) => ({
+      ...prevLead,
+      [name]: value
+    }));
+
+    if (errors[name]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: false
+      }));
+    }
+  };
+
+  const handleSelectOptionFieldChange = (fieldName: string) => (value: OptionSetType | OptionSetType[] | null) => {
+      if (Array.isArray(value)) {
+        // Çoklu seçim modunda
+        const selectedIds = value.map((option) => option.Value).join(", ");
+        const selectedNames = value.map((option) => option.Label).join(", ");
+        setBranchInformation((prev) => ({
+          ...prev,
+          [fieldName]: { Value: selectedIds, Label: selectedNames }
+        }));
+      } else {
+        // Tekli seçim modunda
+        setBranchInformation((prev) => ({
+          ...prev,
+          [fieldName]: {
+            Value: value ? value.Value : "",
+            Label: value ? value.Label : ""
+          }
+        }));
+      }
+    };
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
   };
@@ -270,140 +245,196 @@ const EmailsCreate: React.FC = () => {
     setActiveStep(0);
   };
 
-  const getStepContactContent = (step: number) => {
+  //If companyType is contact
+  const getStepContent = (step: number) => {
     switch (step) {
       case 0:
         return (
           <Grid container spacing={3}>
-            <Grid item {...gridItemSize}>
+            <Grid item {...gridItemSize} sx={{ display: "none" }}>
               <TextField
-                label="Konu"
+                label="Şube Bilgi Id"
                 fullWidth
                 variant="outlined"
-                id="Subject"
-                name="Subject"
-                value={email.Subject}
-                onChange={handleInputChange}
+                name="BranchInformationId"
+                value={branchInformation.BranchInformationId}
+                InputProps={{
+                  readOnly: true
+                }}
               />
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <GenericAutocomplete
-                apiEndpoint="api/get-all-customers"
-                label="Kimden"
-                getCRMData={getCRMData}
-                selectedValue={
-                  email.From
-                    ? {
-                        Id: email.From.Id,
-                        Name: email.From.Name,
-                        LogicalName: ""
-                      }
-                    : null
-                }
-                onValueChange={handleSelectFieldChange2("From")}
-                error={!!errors.From} // Hata kontrolü
-                helperText={errors.From ? "Bu alan zorunludur" : ""} // Hata mesajı
-                disabled={true}
-              />
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <GenericAutocomplete
-                apiEndpoint="api/search-partylist-by-activities"
-                label="Kime"
-                getCRMData={getCRMData}
-                selectedValue={
-                  email.To
-                    ? {
-                        Id: email.To.Id,
-                        Name: email.To.Name,
-                        LogicalName: email.To.LogicalName
-                      }
-                    : null
-                }
-                onValueChange={handleSelectFieldChange2("To")}
-                error={!!errors.To} // Hata kontrolü
-                helperText={errors.To ? "Bu alan zorunludur" : ""} // Hata mesajı
-                isMulti={false}
-                required={true}
-              />
-              {/* <TextField
-                label="Kime"
-                fullWidth
-                variant="outlined"
-                id="To"
-                name="To"
-                value={email.To}
-                onChange={handleInputChange}
-              /> */}
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <GenericAutocomplete
-                apiEndpoint="api/search-partylist-by-activities"
-                label="Bilgi"
-                getCRMData={getCRMData}
-                selectedValue={
-                  email.Cc
-                    ? {
-                        Id: email.Cc.Id,
-                        Name: email.Cc.Name,
-                        LogicalName: email.Cc.LogicalName
-                      }
-                    : null
-                }
-                onValueChange={handleSelectFieldChange2("Cc")}
-                error={!!errors.Cc} // Hata kontrolü
-                helperText={errors.Cc ? "Bu alan zorunludur" : ""} // Hata mesajı
-                isMulti={false}
-                required={false}
-              />
-              {/* <TextField
-                label="Bilgi"
-                fullWidth
-                variant="outlined"
-                id="Cc"
-                name="Cc"
-                value={email.Cc}
-                onChange={handleInputChange}
-              /> */}
-            </Grid>
-            <Grid item {...gridItemSize}>
-              <GenericAutocomplete
-                apiEndpoint="api/search-partylist-by-activities"
-                label="Gizli"
-                getCRMData={getCRMData}
-                selectedValue={
-                  email.Bcc
-                    ? {
-                        Id: email.Bcc.Id,
-                        Name: email.Bcc.Name,
-                        LogicalName: email.Bcc.LogicalName
-                      }
-                    : null
-                }
-                onValueChange={handleSelectFieldChange2("Bcc")}
-                error={!!errors.Bcc} // Hata kontrolü
-                helperText={errors.Bcc ? "Bu alan zorunludur" : ""} // Hata mesajı
-                isMulti={false}
-                required={false}
-              />
-              {/* <TextField
-                label="Gizli"
-                fullWidth
-                variant="outlined"
-                id="Bcc"
-                name="Bcc"
-                value={email.Bcc}
-                onChange={handleInputChange}
-              /> */}
             </Grid>
             <Grid item {...gridItemSize}>
               <TextField
-                label="Mesaj"
+                label="Şube Adı"
                 fullWidth
                 variant="outlined"
-                id="Message"
-                name="Message"
-                value={email.Message}
+                name="BranchName"
+                value={branchInformation.BranchName}
+                onChange={handleInputChange}
+                error={!!errors.BranchName}
+                helperText={errors.BranchName ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <TextField
+                label="Şube No"
+                fullWidth
+                variant="outlined"
+                name="BranchId"
+                value={branchInformation.BranchId}
+                onChange={handleInputChange}
+                error={!!errors.BranchId}
+                helperText={errors.BranchId ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/get-all-accounts"
+                label="Şube"
+                getCRMData={getCRMData}
+                selectedValue={
+                  branchInformation.AccountId
+                    ? {
+                        Id: branchInformation.AccountId.Id,
+                        Name: branchInformation.AccountId.Name,
+                        LogicalName: branchInformation.AccountId.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("AccountId")}
+                error={!!errors.AccountId}
+                helperText={errors.AccountId ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <TextField
+                label="Firma Numarası"
+                fullWidth
+                variant="outlined"
+                name="AccountNumber"
+                value={branchInformation.AccountNumber}
+                onChange={handleInputChange}
+                error={!!errors.AccountNumber}
+                helperText={errors.AccountNumber ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <TextField
+                label="Garanti Şube Kodu"
+                fullWidth
+                variant="outlined"
+                name="ReferenceBranchCode"
+                value={branchInformation.ReferenceBranchCode}
+                onChange={handleInputChange}
+                error={!!errors.ReferenceBranchCode}
+                helperText={errors.ReferenceBranchCode ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/get-all-accounts"
+                label="Bağlı Olduğu Firma"
+                getCRMData={getCRMData}
+                selectedValue={
+                  branchInformation.RelatedCompany
+                    ? {
+                        Id: branchInformation.RelatedCompany.Id,
+                        Name: branchInformation.RelatedCompany.Name,
+                        LogicalName: branchInformation.RelatedCompany.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("RelatedCompany")}
+                error={!!errors.RelatedCompany}
+                helperText={errors.RelatedCompany ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/search-lookup-by-name/new_customererprecord/new_name"
+                label="ERP Kodu"
+                getCRMData={getCRMData}
+                selectedValue={
+                  branchInformation.ErpCode
+                    ? {
+                        Id: branchInformation.ErpCode.Id,
+                        Name: branchInformation.ErpCode.Name,
+                        LogicalName: branchInformation.ErpCode.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("ErpCode")}
+                error={!!errors.ErpCode}
+                helperText={errors.ErpCode ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <TextField
+                select
+                label="Şube Tipi"
+                fullWidth
+                variant="outlined"
+                id="BranchType"
+                name="BranchType"
+                value={branchInformation.BranchType.Value}
+                onChange={handleInputChange}
+                error={!!errors.BranchType}
+                helperText={errors.BranchType ? "Bu alan zorunludur" : ""}
+              >
+                <MenuItem value={0}>---</MenuItem>
+                <MenuItem value={1}>Üye Şube</MenuItem>
+                <MenuItem value={2}>Müşteri Şube</MenuItem>
+                <MenuItem value={3}>MCR Şube</MenuItem>
+                <MenuItem value={4}>MultiTravel Müşteri Şube</MenuItem>
+                <MenuItem value={5}>MultiTravel Üye Şube</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <TextField
+                select
+                label="Sözleşme Tipi"
+                fullWidth
+                variant="outlined"
+                id="ContractType"
+                name="ContractType"
+                value={Number(branchInformation.ContractType)}
+                onChange={handleInputChange}
+                error={!!errors.ContractType}
+                helperText={errors.ContractType ? "Bu alan zorunludur" : ""}
+              >
+                <MenuItem value="">---</MenuItem>
+                <MenuItem value={0}>Şubeye Bağlı</MenuItem>
+                <MenuItem value={1}>Firmaya Bağlı</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item {...gridItemSize}>
+              <GenericAutocomplete
+                apiEndpoint="api/get-all-users"
+                label="Sahibi"
+                getCRMData={getCRMData}
+                selectedValue={
+                  branchInformation.OwnerId
+                    ? {
+                        Id: branchInformation.OwnerId.Id,
+                        Name: branchInformation.OwnerId.Name,
+                        LogicalName: branchInformation.OwnerId.LogicalName
+                      }
+                    : null
+                }
+                onValueChange={handleSelectFieldChange2("OwnerId")}
+                error={!!errors.OwnerId}
+                helperText={errors.OwnerId ? "Bu alan zorunludur" : ""}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Açıklama"
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                name="Description"
+                value={branchInformation.Description || ""}
                 onChange={handleInputChange}
               />
             </Grid>
@@ -483,7 +514,7 @@ const EmailsCreate: React.FC = () => {
               <Box sx={{ mt: 3 }}>
                 <form onSubmit={handleSubmit}>
                   {/* Fill stepper content here. */}
-                  {getStepContactContent(activeStep)}
+                  {getStepContent(activeStep)}
                 </form>
               </Box>
               <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
@@ -528,33 +559,7 @@ const EmailsCreate: React.FC = () => {
                 <Box sx={{ flex: "1 1 auto" }} />
 
                 {/* Next or Submit Button */}
-                {activeStep === steps.length - 1 ? (
-                  <form onSubmit={handleSubmit}>
-                    <Button
-                      variant="outlined"
-                      type="submit"
-                      sx={{
-                        m: 1,
-                        color: btnColor,
-                        borderColor: btnColor,
-                        "&:hover": {
-                          borderColor:
-                            selectedBrand === BrandOptions.Budget
-                              ? BrandColors.BudgetDark
-                              : BrandColors.AvisDark,
-                          backgroundColor:
-                            selectedBrand === BrandOptions.Budget
-                              ? BrandColors.Budget
-                              : BrandColors.AvisDark,
-                          color: "#fff",
-                          justifyContent: "flex-end"
-                        }
-                      }}
-                    >
-                      Kaydet
-                    </Button>
-                  </form>
-                ) : (
+                {activeStep === steps.length - 1 ? null : (
                   <Button
                     variant="outlined"
                     onClick={handleNext}
@@ -600,4 +605,4 @@ const EmailsCreate: React.FC = () => {
   );
 };
 
-export default EmailsCreate;
+export default BranchInformationsDetail;
